@@ -19,7 +19,7 @@ type PatientInfo = {
 
 const initialPatient: PatientInfo = {
   name: "홍윤지",
-  gender: "여성성",
+  gender: "여성",
   birth: "2003.10.08",
 };
 
