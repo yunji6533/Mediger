@@ -139,7 +139,7 @@ function HomeScreen({
         </button>
 
         <div className="flex gap-2">
-          <IconButton label="알림" icon="⌂" onClick={goAlerts} />
+          <IconButton label="알림" icon="🔔" onClick={goAlerts} />
           <IconButton label="설정" icon="⚙" onClick={goSettings} />
         </div>
       </div>
@@ -214,7 +214,7 @@ function StatusPill({ value }: { value: number }) {
   );
 }
 
-function SettingsScreen({ patient, goHome, setPatient }: any) {
+function SettingsScreen({ patient, goHome }: any) {
   return (
     <div className="space-y-5">
       <PageHeader title="설정" onBack={goHome} />
@@ -441,10 +441,72 @@ function MetricsScreen({ records, goHome }: any) {
           다음 식사 때 탄수화물 섭취량과 식후 활동 여부를 같이 기록하면 원인 분석에 도움이 됩니다.
         </p>
       </div>
+
+      <OutlierTable records={records} />
     </div>
   );
 }
 
+function OutlierTable({ records }: { records: RecordItem[] }) {
+  const outliers = records.filter(
+    (item) => item.glucose >= 180 || item.glucose <= 70
+  );
+
+  return (
+    <div className="rounded-[2rem] bg-white p-5 shadow-sm">
+      <div className="mb-4">
+        <p className="text-sm font-bold text-[#3f63f4]">이상치 감지</p>
+        <h2 className="mt-2 text-lg font-black">오늘 감지된 이상 기록</h2>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-100">
+        {/* 헤더 */}
+        <div className="grid grid-cols-3 bg-slate-100 px-4 py-3 text-xs font-bold text-slate-500">
+          <span>시간</span>
+          <span className="text-center">혈당</span>
+          <span className="text-right">상태</span>
+        </div>
+
+        {/* 데이터 */}
+        {outliers.length === 0 ? (
+          <div className="px-4 py-5 text-center text-sm text-slate-500">
+            감지된 이상치가 없습니다.
+          </div>
+        ) : (
+          outliers.map((item, index) => {
+            const status = item.glucose >= 180 ? "고혈당" : "저혈당";
+
+            return (
+              <div
+                key={`${item.time}-${index}`}
+                className="grid grid-cols-3 border-t border-slate-100 px-4 py-4 text-sm text-slate-700"
+              >
+                {/* 시간 */}
+                <span>{item.time}</span>
+
+                {/* 혈당 */}
+                <span className="text-center font-black">
+                  {item.glucose}
+                </span>
+
+                {/* 상태 */}
+                <span
+                  className={`text-right font-bold ${
+                    status === "고혈당"
+                      ? "text-red-500"
+                      : "text-orange-500"
+                  }`}
+                >
+                  {status}
+                </span>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
 function AlertsScreen({ latest, spikeCount, lowCount, goHome }: any) {
   return (
     <div className="space-y-5">
