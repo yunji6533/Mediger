@@ -1,0 +1,84 @@
+[
+  {
+    "changedAt": "2024-02-15",
+    "prescriptions": [
+      {
+        "id": "rx1",
+        "drug": "Lantus (인슐린 글라진)",
+        "dose": "18U",
+        "frequency": "저녁 1회",
+        "route": "피하주사",
+        "startDate": "2024-02-15"
+      },
+      {
+        "id": "rx2",
+        "drug": "NovoRapid (인슐린 아스파르트)",
+        "dose": "6U",
+        "frequency": "매 식전 3회",
+        "route": "피하주사",
+        "startDate": "2024-02-15"
+      },
+      {
+        "id": "rx3",
+        "drug": "Metformin",
+        "dose": "1000mg",
+        "frequency": "1일 2회 (식후)",
+        "route": "경구",
+        "startDate": "2024-02-15"
+      }
+    ],
+    "note": "기저 인슐린 2U 증량 (저녁 고혈당 개선 목적). 추적 관찰 필요."
+  },
+  {
+    "changedAt": "2023-08-10",
+    "prescriptions": [
+      {
+        "id": "rx4",
+        "drug": "Lantus (인슐린 글라진)",
+        "dose": "16U",
+        "frequency": "저녁 1회",
+        "route": "피하주사",
+        "startDate": "2023-08-10"
+      },
+      {
+        "id": "rx5",
+        "drug": "NovoRapid (인슐린 아스파르트)",
+        "dose": "6U",
+        "frequency": "매 식전 3회",
+        "route": "피하주사",
+        "startDate": "2023-08-10"
+      },
+      {
+        "id": "rx6",
+        "drug": "Metformin",
+        "dose": "1000mg",
+        "frequency": "1일 2회 (식후)",
+        "route": "경구",
+        "startDate": "2023-08-10"
+      }
+    ],
+    "note": "Metformin 용량 유지, 기저 인슐린 증량 검토"
+  },
+  {
+    "changedAt": "2022-01-20",
+    "prescriptions": [
+      {
+        "id": "rx7",
+        "drug": "Lantus (인슐린 글라진)",
+        "dose": "12U",
+        "frequency": "저녁 1회",
+        "route": "피하주사",
+        "startDate": "2022-01-20"
+      },
+      {
+        "id": "rx8",
+        "drug": "Metformin",
+        "dose": "500mg",
+        "frequency": "1일 2회 (식후)",
+        "route": "경구",
+        "startDate": "2022-01-20"
+      }
+    ],
+    "note": "초기 처방 — 기저 인슐린 단독 시작"
+  }
+]

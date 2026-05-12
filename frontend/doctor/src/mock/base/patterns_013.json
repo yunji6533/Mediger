@@ -1,0 +1,50 @@
+[
+  {
+    "id": "p1",
+    "patientId": "013",
+    "timestamp": "2024-02-28T03:15:00Z",
+    "patternType": "nocturnal_hypo_pattern",
+    "severity": "high",
+    "value": 58
+  },
+  {
+    "id": "p2",
+    "patientId": "013",
+    "timestamp": "2024-02-28T19:45:00Z",
+    "patternType": "postprandial_spike_pattern",
+    "severity": "medium",
+    "value": 248
+  },
+  {
+    "id": "p3",
+    "patientId": "013",
+    "timestamp": "2024-02-28T21:00:00Z",
+    "patternType": "evening_hyper_trend",
+    "severity": "high",
+    "value": 312
+  },
+  {
+    "id": "p4",
+    "patientId": "013",
+    "timestamp": "2024-02-27T21:15:00Z",
+    "patternType": "high_glucose_variability",
+    "severity": "low",
+    "value": null
+  },
+  {
+    "id": "p5",
+    "patientId": "013",
+    "timestamp": "2024-02-26T03:00:00Z",
+    "patternType": "nocturnal_hypo_pattern",
+    "severity": "high",
+    "value": 62
+  },
+  {
+    "id": "p6",
+    "patientId": "013",
+    "timestamp": "2024-02-25T13:30:00Z",
+    "patternType": "post_hypo_glucose_rise",
+    "severity": "medium",
+    "value": 195
+  }
+]
