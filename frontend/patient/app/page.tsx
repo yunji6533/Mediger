@@ -18,9 +18,9 @@ type PatientInfo = {
 };
 
 const initialPatient: PatientInfo = {
-  name: "조국남",
-  gender: "남성",
-  birth: "1968.05.08",
+  name: "홍윤지",
+  gender: "여성성",
+  birth: "2003.10.08",
 };
 
 const dayRecords: RecordItem[] = [
@@ -132,7 +132,6 @@ function HomeScreen({
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3">
         <button type="button" onClick={goPatientEdit} className="text-left active:scale-[0.98]">
-          <p className="text-sm font-semibold text-slate-400">오늘의 환자</p>
           <h1 className="mt-1 text-4xl font-black tracking-tight">{patient.name}</h1>
           <p className="mt-1 text-sm text-slate-500">
             {patient.gender} · {patient.birth}
