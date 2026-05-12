@@ -2,7 +2,14 @@
 
 import { useMemo, useState } from "react";
 
-type Screen = "home" | "record" | "alerts" | "metrics" | "patientEdit" | "settings";
+type Screen =
+  | "home"
+  | "record"
+  | "alerts"
+  | "metrics"
+  | "patientEdit"
+  | "settings";
+
 type ChartType = "day" | "week" | "month";
 
 type RecordItem = {
@@ -95,7 +102,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f2f4f8] px-5 py-6 text-slate-950">
+    <main className="min-h-screen bg-[#eef4fb] px-5 py-6 text-slate-950">
       <section className="mx-auto max-w-md space-y-5">
         {screen === "home" && (
           <HomeScreen
@@ -121,6 +128,9 @@ export default function Home() {
 function HomeScreen({
   records,
   latest,
+  todayAverage,
+  spikeCount,
+  lowCount,
   patient,
   goAlerts,
   goMetrics,
@@ -131,9 +141,15 @@ function HomeScreen({
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3">
-        <button type="button" onClick={goPatientEdit} className="text-left active:scale-[0.98]">
-          <h1 className="mt-1 text-4xl font-black tracking-tight">{patient.name}</h1>
-          <p className="mt-1 text-sm text-slate-500">
+        <button
+          type="button"
+          onClick={goPatientEdit}
+          className="text-left active:scale-[0.98]"
+        >
+          <h1 className="mt-1 text-4xl font-black tracking-tight text-slate-950">
+            {patient.name}
+          </h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">
             {patient.gender} · {patient.birth}
           </p>
         </button>
@@ -144,19 +160,29 @@ function HomeScreen({
         </div>
       </div>
 
-      <div className="rounded-[2.25rem] bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.08)]">
+      <div className="rounded-[2.25rem] bg-white p-5 shadow-[0_18px_45px_rgba(31,64,104,0.10)]">
         <div className="flex items-end justify-between">
           <div>
             <p className="text-sm font-bold text-slate-400">현재 혈당</p>
             <div className="mt-2 flex items-end gap-2">
-              <span className="text-7xl font-black tracking-tight">{latest}</span>
-              <span className="mb-3 text-lg font-bold text-slate-700">mg/dL</span>
+              <span className="text-7xl font-black tracking-tight">
+                {latest}
+              </span>
+              <span className="mb-3 text-lg font-bold text-slate-700">
+                mg/dL
+              </span>
             </div>
           </div>
           <StatusPill value={latest} />
         </div>
 
-        <p className="mt-4 text-sm leading-6 text-slate-500">
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <MiniStat label="오늘 평균" value={`${todayAverage}`} />
+          <MiniStat label="고혈당" value={`${spikeCount}건`} />
+          <MiniStat label="저혈당" value={`${lowCount}건`} />
+        </div>
+
+        <p className="mt-5 text-sm leading-6 text-slate-500">
           하루 혈당 그래프입니다.
           <br />
           00:00~23:00 기준으로 표시됩니다.
@@ -167,7 +193,7 @@ function HomeScreen({
         <button
           type="button"
           onClick={goMetrics}
-          className="mt-5 w-full rounded-2xl bg-slate-950 py-4 text-sm font-bold text-white active:scale-[0.98]"
+          className="mt-5 w-full rounded-2xl bg-[#0b5787] py-4 text-sm font-black text-white shadow-[0_10px_24px_rgba(11,87,135,0.25)] active:scale-[0.98]"
         >
           상세 지표 보기
         </button>
@@ -176,11 +202,11 @@ function HomeScreen({
       <button
         type="button"
         onClick={goRecord}
-        className="flex w-full items-center justify-between rounded-[2rem] bg-[#3f63f4] px-5 py-5 text-left text-white shadow-[0_12px_30px_rgba(63,99,244,0.25)] active:scale-[0.98]"
+        className="flex w-full items-center justify-between rounded-[2rem] bg-[#0b5787] px-5 py-5 text-left text-white shadow-[0_16px_35px_rgba(11,87,135,0.25)] active:scale-[0.98]"
       >
         <div>
           <p className="text-2xl font-black">수기 입력</p>
-          <p className="mt-1 text-sm text-blue-100">
+          <p className="mt-1 text-sm font-medium text-blue-100">
             혈당과 시간을 직접 입력하여 기록에 반영하세요.
           </p>
         </div>
@@ -190,12 +216,29 @@ function HomeScreen({
   );
 }
 
-function IconButton({ label, icon, onClick }: { label: string; icon: string; onClick: () => void }) {
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-[#f5f8fc] px-3 py-3">
+      <p className="text-[11px] font-bold text-slate-400">{label}</p>
+      <p className="mt-1 text-sm font-black text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function IconButton({
+  label,
+  icon,
+  onClick,
+}: {
+  label: string;
+  icon: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex h-14 w-14 flex-col items-center justify-center rounded-2xl bg-white text-slate-900 shadow-sm active:scale-[0.96]"
+      className="flex h-14 w-14 flex-col items-center justify-center rounded-2xl bg-white text-slate-900 shadow-[0_8px_20px_rgba(31,64,104,0.08)] active:scale-[0.96]"
       aria-label={label}
     >
       <span className="text-xl leading-none">{icon}</span>
@@ -205,10 +248,20 @@ function IconButton({ label, icon, onClick }: { label: string; icon: string; onC
 }
 
 function StatusPill({ value }: { value: number }) {
-  const text = value <= 70 ? "주의" : value >= 180 ? "위험" : "정상";
+  const isLow = value <= 70;
+  const isHigh = value >= 180;
+  const text = isLow ? "주의" : isHigh ? "위험" : "정상";
 
   return (
-    <div className="rounded-full bg-slate-100 px-4 py-2 text-xs font-black text-slate-700">
+    <div
+      className={`rounded-full px-4 py-2 text-xs font-black ${
+        isHigh
+          ? "bg-red-50 text-red-500"
+          : isLow
+          ? "bg-orange-50 text-orange-500"
+          : "bg-emerald-50 text-emerald-600"
+      }`}
+    >
       {text}
     </div>
   );
@@ -221,7 +274,7 @@ function SettingsScreen({ patient, goHome }: any) {
 
       <div className="rounded-[2rem] bg-white p-5 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl font-black">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eef6fb] text-2xl font-black text-[#0b5787]">
             {patient.name.slice(0, 1)}
           </div>
           <div>
@@ -254,17 +307,29 @@ function SettingsScreen({ patient, goHome }: any) {
 }
 
 function SettingGroup({ children }: { children: React.ReactNode }) {
-  return <div className="overflow-hidden rounded-[1.75rem] bg-white shadow-sm">{children}</div>;
+  return (
+    <div className="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_12px_30px_rgba(31,64,104,0.07)]">
+      {children}
+    </div>
+  );
 }
 
-function SettingRow({ title, text, icon }: { title: string; text: string; icon: string }) {
+function SettingRow({
+  title,
+  text,
+  icon,
+}: {
+  title: string;
+  text: string;
+  icon: string;
+}) {
   return (
     <button
       type="button"
       onClick={() => alert(`${title} 기능은 추후 백엔드 연동 예정입니다.`)}
       className="flex w-full items-center gap-4 border-b border-slate-100 px-5 py-4 text-left last:border-b-0 active:bg-slate-50"
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-lg font-bold text-slate-700">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f3f7fb] text-lg font-bold text-slate-600">
         {icon}
       </div>
       <div className="flex-1">
@@ -299,11 +364,19 @@ function PatientEditScreen({ patient, setPatient, goHome }: any) {
       <div className="rounded-[2rem] bg-white p-5 shadow-sm">
         <div className="space-y-4">
           <InputLabel label="이름">
-            <input value={name} onChange={(e) => setName(e.target.value)} className="input-style" />
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input-style"
+            />
           </InputLabel>
 
           <InputLabel label="성별">
-            <select value={gender} onChange={(e) => setGender(e.target.value)} className="input-style">
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="input-style"
+            >
               <option>남성</option>
               <option>여성</option>
               <option>기타</option>
@@ -311,13 +384,17 @@ function PatientEditScreen({ patient, setPatient, goHome }: any) {
           </InputLabel>
 
           <InputLabel label="생년월일">
-            <input value={birth} onChange={(e) => setBirth(e.target.value)} className="input-style" />
+            <input
+              value={birth}
+              onChange={(e) => setBirth(e.target.value)}
+              className="input-style"
+            />
           </InputLabel>
 
           <button
             type="button"
             onClick={savePatient}
-            className="w-full rounded-2xl bg-[#3f63f4] py-4 font-bold text-white shadow-sm active:scale-[0.98]"
+            className="w-full rounded-2xl bg-[#0b5787] py-4 font-black text-white shadow-sm active:scale-[0.98]"
           >
             수정 완료
           </button>
@@ -327,7 +404,13 @@ function PatientEditScreen({ patient, setPatient, goHome }: any) {
   );
 }
 
-function InputLabel({ label, children }: { label: string; children: React.ReactNode }) {
+function InputLabel({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <p className="mb-2 text-sm font-bold text-slate-600">{label}</p>
@@ -355,7 +438,9 @@ function RecordScreen({ records, setRecords, goHome }: any) {
       memo: memo || "특이사항 없음",
     };
 
-    const sorted = [...records, newRecord].sort((a, b) => a.time.localeCompare(b.time));
+    const sorted = [...records, newRecord].sort((a, b) =>
+      a.time.localeCompare(b.time)
+    );
 
     setRecords(sorted);
     setGlucose("");
@@ -370,17 +455,37 @@ function RecordScreen({ records, setRecords, goHome }: any) {
       <PageHeader title="수기 입력" onBack={goHome} />
 
       <div className="rounded-[2rem] bg-white p-5 shadow-sm">
-        <p className="mb-4 text-sm leading-6 text-slate-500">누락된 혈당을 작성해주세요.</p>
+        <p className="mb-4 text-sm leading-6 text-slate-500">
+          누락된 혈당을 작성해주세요.
+        </p>
 
         <div className="space-y-3">
-          <input value={time} onChange={(e) => setTime(e.target.value)} type="time" className="input-style" />
-          <input value={glucose} onChange={(e) => setGlucose(e.target.value)} type="number" placeholder="혈당 입력 mg/dL" className="input-style" />
-          <textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="환자가 수기 입력할 특이사항" className="h-28 input-style" />
+          <input
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            type="time"
+            className="input-style"
+          />
+
+          <input
+            value={glucose}
+            onChange={(e) => setGlucose(e.target.value)}
+            type="number"
+            placeholder="혈당 입력 mg/dL"
+            className="input-style"
+          />
+
+          <textarea
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            placeholder="환자가 수기 입력할 특이사항"
+            className="h-28 input-style"
+          />
 
           <button
             type="button"
             onClick={addRecord}
-            className="w-full rounded-2xl bg-[#3f63f4] py-4 font-bold text-white shadow-sm active:scale-[0.98]"
+            className="w-full rounded-2xl bg-[#0b5787] py-4 font-black text-white shadow-sm active:scale-[0.98]"
           >
             기록 저장
           </button>
@@ -399,18 +504,32 @@ function MetricsScreen({ records, goHome }: any) {
     <div className="space-y-4">
       <PageHeader title="상세 지표" onBack={goHome} />
 
-      <div className="rounded-[2rem] bg-white p-5 shadow-sm">
-        <div className="grid grid-cols-3 rounded-2xl bg-slate-100 p-1">
-          <ChartTab label="하루" active={chartType === "day"} onClick={() => setChartType("day")} />
-          <ChartTab label="주간" active={chartType === "week"} onClick={() => setChartType("week")} />
-          <ChartTab label="월간" active={chartType === "month"} onClick={() => setChartType("month")} />
+      <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(31,64,104,0.07)]">
+        <div className="grid grid-cols-3 rounded-2xl bg-[#f1f5fa] p-1">
+          <ChartTab
+            label="하루"
+            active={chartType === "day"}
+            onClick={() => setChartType("day")}
+          />
+          <ChartTab
+            label="주간"
+            active={chartType === "week"}
+            onClick={() => setChartType("week")}
+          />
+          <ChartTab
+            label="월간"
+            active={chartType === "month"}
+            onClick={() => setChartType("month")}
+          />
         </div>
 
         <div className="mt-5">
           {chartType === "day" && (
             <>
               <h2 className="text-lg font-black">하루치 혈당 그래프</h2>
-              <p className="mt-1 text-sm text-slate-500">메인 페이지와 동일한 하루 혈당 흐름입니다.</p>
+              <p className="mt-1 text-sm text-slate-500">
+                메인 페이지와 동일한 하루 혈당 흐름입니다.
+              </p>
               <DailyLineChart records={records} compact />
             </>
           )}
@@ -418,7 +537,9 @@ function MetricsScreen({ records, goHome }: any) {
           {chartType === "week" && (
             <>
               <h2 className="text-lg font-black">주간 혈당 그래프</h2>
-              <p className="mt-1 text-sm text-slate-500">최근 7일 평균 혈당 흐름입니다.</p>
+              <p className="mt-1 text-sm text-slate-500">
+                최근 7일 평균 혈당 흐름입니다.
+              </p>
               <SimpleLineChart data={weeklyRecords} />
             </>
           )}
@@ -426,19 +547,24 @@ function MetricsScreen({ records, goHome }: any) {
           {chartType === "month" && (
             <>
               <h2 className="text-lg font-black">월간 혈당 그래프</h2>
-              <p className="mt-1 text-sm text-slate-500">최근 4주 평균 혈당 흐름입니다.</p>
+              <p className="mt-1 text-sm text-slate-500">
+                최근 4주 평균 혈당 흐름입니다.
+              </p>
               <SimpleLineChart data={monthlyRecords} />
             </>
           )}
         </div>
       </div>
 
-      <div className="rounded-[2rem] bg-white p-5 shadow-sm">
-        <p className="text-sm font-bold text-[#3f63f4]">AI 피드백</p>
-        <h2 className="mt-2 text-lg font-black">식사 이후 혈당이 급상승하는 패턴이 보여요!</h2>
+      <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(31,64,104,0.07)]">
+        <p className="text-sm font-bold text-[#0b5787]">AI 피드백</p>
+        <h2 className="mt-2 text-lg font-black">
+          식사 이후 혈당이 급상승하는 패턴이 보여요!
+        </h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          식후 구간에서 혈당이 목표 범위보다 빠르게 상승하는 시간이 반복적으로 보입니다.
-          다음 식사 때 탄수화물 섭취량과 식후 활동 여부를 같이 기록하면 원인 분석에 도움이 됩니다.
+          식후 구간에서 혈당이 목표 범위보다 빠르게 상승하는 시간이
+          반복적으로 보입니다. 다음 식사 때 탄수화물 섭취량과 식후 활동
+          여부를 같이 기록하면 원인 분석에 도움이 됩니다.
         </p>
       </div>
 
@@ -453,51 +579,65 @@ function OutlierTable({ records }: { records: RecordItem[] }) {
   );
 
   return (
-    <div className="rounded-[2rem] bg-white p-5 shadow-sm">
-      <div className="mb-4">
-        <p className="text-sm font-bold text-[#3f63f4]">이상치 감지</p>
-        <h2 className="mt-2 text-lg font-black">오늘 감지된 이상 기록</h2>
+    <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(31,64,104,0.07)]">
+      <div className="mb-4 flex items-end justify-between">
+        <div>
+          <p className="text-sm font-bold text-[#0b5787]">이상치 감지</p>
+          <h2 className="mt-2 text-lg font-black">오늘 감지된 이상 기록</h2>
+        </div>
+
+        <div className="rounded-full bg-[#f1f5fa] px-3 py-1 text-xs font-bold text-slate-500">
+          총 {outliers.length}건
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-100">
-        {/* 헤더 */}
-        <div className="grid grid-cols-3 bg-slate-100 px-4 py-3 text-xs font-bold text-slate-500">
+      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white">
+        <div className="grid grid-cols-3 bg-[#f7f9fc] px-4 py-3 text-xs font-bold text-slate-500">
           <span>시간</span>
           <span className="text-center">혈당</span>
           <span className="text-right">상태</span>
         </div>
 
-        {/* 데이터 */}
         {outliers.length === 0 ? (
-          <div className="px-4 py-5 text-center text-sm text-slate-500">
-            감지된 이상치가 없습니다.
+          <div className="px-4 py-8 text-center">
+            <p className="text-sm font-bold text-slate-700">
+              감지된 이상치가 없습니다.
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              현재 기록은 정상 범위 안에 있습니다.
+            </p>
           </div>
         ) : (
           outliers.map((item, index) => {
-            const status = item.glucose >= 180 ? "고혈당" : "저혈당";
+            const isHigh = item.glucose >= 180;
+            const status = isHigh ? "고혈당" : "저혈당";
 
             return (
               <div
                 key={`${item.time}-${index}`}
-                className="grid grid-cols-3 border-t border-slate-100 px-4 py-4 text-sm text-slate-700"
+                className="grid grid-cols-3 items-center border-t border-slate-100 px-4 py-4 text-sm"
               >
-                {/* 시간 */}
-                <span>{item.time}</span>
+                <span className="font-medium text-slate-600">{item.time}</span>
 
-                {/* 혈당 */}
-                <span className="text-center font-black">
-                  {item.glucose}
+                <span className="text-center">
+                  <span className="font-black text-slate-950">
+                    {item.glucose}
+                  </span>
+                  <span className="ml-1 text-xs font-medium text-slate-400">
+                    mg/dL
+                  </span>
                 </span>
 
-                {/* 상태 */}
-                <span
-                  className={`text-right font-bold ${
-                    status === "고혈당"
-                      ? "text-red-500"
-                      : "text-orange-500"
-                  }`}
-                >
-                  {status}
+                <span className="text-right">
+                  <span
+                    className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${
+                      isHigh
+                        ? "bg-red-50 text-red-500"
+                        : "bg-orange-50 text-orange-500"
+                    }`}
+                  >
+                    {status}
+                  </span>
                 </span>
               </div>
             );
@@ -507,23 +647,59 @@ function OutlierTable({ records }: { records: RecordItem[] }) {
     </div>
   );
 }
+
 function AlertsScreen({ latest, spikeCount, lowCount, goHome }: any) {
   return (
     <div className="space-y-5">
       <PageHeader title="알림" onBack={goHome} />
 
       <div className="space-y-3">
-        {latest >= 180 && <AlertBox title="기준치 초과 알림" text="현재 혈당이 목표 범위를 초과했습니다." />}
-        {latest <= 70 && <AlertBox title="저혈당 위험" text="현재 혈당이 낮습니다. 빠른 확인이 필요합니다." />}
-        {spikeCount > 0 && <AlertBox title="급상승 감지" text="최근 기록 중 급상승 구간이 있습니다." />}
-        {lowCount > 0 && <AlertBox title="저혈당 기록" text="오늘 저혈당 구간이 감지되었습니다." />}
-        <AlertBox title="누락 입력 알림" text="측정되지 않은 시간대가 있으면 수기로 입력해주세요." />
+        {latest >= 180 && (
+          <AlertBox
+            title="기준치 초과 알림"
+            text="현재 혈당이 목표 범위를 초과했습니다."
+          />
+        )}
+
+        {latest <= 70 && (
+          <AlertBox
+            title="저혈당 위험"
+            text="현재 혈당이 낮습니다. 빠른 확인이 필요합니다."
+          />
+        )}
+
+        {spikeCount > 0 && (
+          <AlertBox
+            title="급상승 감지"
+            text="최근 기록 중 급상승 구간이 있습니다."
+          />
+        )}
+
+        {lowCount > 0 && (
+          <AlertBox
+            title="저혈당 기록"
+            text="오늘 저혈당 구간이 감지되었습니다."
+          />
+        )}
+
+        <AlertBox
+          title="누락 입력 알림"
+          text="측정되지 않은 시간대가 있으면 수기로 입력해주세요."
+        />
       </div>
     </div>
   );
 }
 
-function ChartTab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function ChartTab({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -537,41 +713,104 @@ function ChartTab({ label, active, onClick }: { label: string; active: boolean; 
   );
 }
 
-function DailyLineChart({ records, compact = false }: { records: RecordItem[]; compact?: boolean }) {
+function DailyLineChart({
+  records,
+  compact = false,
+}: {
+  records: RecordItem[];
+  compact?: boolean;
+}) {
   const width = 320;
   const height = compact ? 145 : 180;
   const minValue = 50;
   const maxValue = 230;
 
   const points = records.map((item, index) => {
-    const x = records.length === 1 ? width / 2 : (index / (records.length - 1)) * width;
-    const y = height - ((item.glucose - minValue) / (maxValue - minValue)) * height;
+    const x =
+      records.length === 1 ? width / 2 : (index / (records.length - 1)) * width;
+    const y =
+      height - ((item.glucose - minValue) / (maxValue - minValue)) * height;
     return { x, y: Math.max(0, Math.min(height, y)), value: item.glucose };
   });
 
-  const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x + 22} ${point.y}`).join(" ");
+  const path = points
+    .map(
+      (point, index) =>
+        `${index === 0 ? "M" : "L"} ${point.x + 22} ${point.y}`
+    )
+    .join(" ");
 
-  const targetTop = height - ((180 - minValue) / (maxValue - minValue)) * height;
-  const targetBottom = height - ((70 - minValue) / (maxValue - minValue)) * height;
+  const targetTop =
+    height - ((180 - minValue) / (maxValue - minValue)) * height;
+  const targetBottom =
+    height - ((70 - minValue) / (maxValue - minValue)) * height;
 
   return (
     <div className="mt-4 rounded-3xl bg-white">
-      <svg viewBox={`0 0 ${width + 22} ${height}`} className={compact ? "h-36 w-full" : "h-48 w-full"}>
-        <text x="0" y="18" className="fill-slate-500 text-xs">230</text>
-        <text x="0" y={targetTop + 4} className="fill-slate-500 text-xs">180</text>
-        <text x="0" y={targetBottom + 4} className="fill-slate-500 text-xs">70</text>
-        <text x="0" y={height - 2} className="fill-slate-500 text-xs">50</text>
+      <svg
+        viewBox={`0 0 ${width + 22} ${height}`}
+        className={compact ? "h-36 w-full" : "h-48 w-full"}
+      >
+        <text x="0" y="18" className="fill-slate-500 text-xs">
+          230
+        </text>
+        <text x="0" y={targetTop + 4} className="fill-slate-500 text-xs">
+          180
+        </text>
+        <text x="0" y={targetBottom + 4} className="fill-slate-500 text-xs">
+          70
+        </text>
+        <text x="0" y={height - 2} className="fill-slate-500 text-xs">
+          50
+        </text>
 
-        <rect x="22" y={targetTop} width={width} height={targetBottom - targetTop} className="fill-emerald-100" />
-        <line x1="22" y1={targetTop} x2={width + 22} y2={targetTop} className="stroke-red-300" strokeWidth="1.5" strokeDasharray="5 5" />
-        <line x1="22" y1={targetBottom} x2={width + 22} y2={targetBottom} className="stroke-red-300" strokeWidth="1.5" strokeDasharray="5 5" />
+        <rect
+          x="22"
+          y={targetTop}
+          width={width}
+          height={targetBottom - targetTop}
+          className="fill-emerald-100"
+        />
 
-        <path d={path} fill="none" className="stroke-[#3f63f4]" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <line
+          x1="22"
+          y1={targetTop}
+          x2={width + 22}
+          y2={targetTop}
+          className="stroke-red-300"
+          strokeWidth="1.5"
+          strokeDasharray="5 5"
+        />
+
+        <line
+          x1="22"
+          y1={targetBottom}
+          x2={width + 22}
+          y2={targetBottom}
+          className="stroke-red-300"
+          strokeWidth="1.5"
+          strokeDasharray="5 5"
+        />
+
+        <path
+          d={path}
+          fill="none"
+          className="stroke-[#0b5787]"
+          strokeWidth="2.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
 
         {points.map((point, index) => {
           const isOutlier = point.value >= 180 || point.value <= 70;
           return (
-            <circle key={index} cx={point.x + 22} cy={point.y} r={isOutlier ? "4" : "3"} className={isOutlier ? "fill-red-500" : "fill-[#3f63f4]"} />
+            <circle
+              key={index}
+              cx={point.x + 22}
+              cy={point.y}
+              r={isOutlier ? "4" : "3"}
+              className={isOutlier ? "fill-red-500" : "fill-[#0b5787]"}
+            />
           );
         })}
       </svg>
@@ -584,34 +823,76 @@ function DailyLineChart({ records, compact = false }: { records: RecordItem[]; c
         <span>23:00</span>
       </div>
 
-      <p className="mt-4 text-sm text-slate-500">연두색 영역은 정상 범위 70~180mg/dL입니다.</p>
+      <p className="mt-4 text-sm text-slate-500">
+        연두색 영역은 정상 범위 70~180mg/dL입니다.
+      </p>
     </div>
   );
 }
 
-function SimpleLineChart({ data }: { data: { label: string; glucose: number }[] }) {
+function SimpleLineChart({
+  data,
+}: {
+  data: { label: string; glucose: number }[];
+}) {
   const width = 320;
   const height = 120;
   const minValue = 50;
   const maxValue = 230;
 
   const points = data.map((item, index) => {
-    const x = data.length === 1 ? width / 2 : (index / (data.length - 1)) * width;
-    const y = height - ((item.glucose - minValue) / (maxValue - minValue)) * height;
-    return { x, y: Math.max(0, Math.min(height, y)), value: item.glucose, label: item.label };
+    const x =
+      data.length === 1 ? width / 2 : (index / (data.length - 1)) * width;
+    const y =
+      height - ((item.glucose - minValue) / (maxValue - minValue)) * height;
+    return {
+      x,
+      y: Math.max(0, Math.min(height, y)),
+      value: item.glucose,
+      label: item.label,
+    };
   });
 
-  const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x + 22} ${point.y}`).join(" ");
-  const targetTop = height - ((180 - minValue) / (maxValue - minValue)) * height;
-  const targetBottom = height - ((70 - minValue) / (maxValue - minValue)) * height;
+  const path = points
+    .map(
+      (point, index) =>
+        `${index === 0 ? "M" : "L"} ${point.x + 22} ${point.y}`
+    )
+    .join(" ");
+
+  const targetTop =
+    height - ((180 - minValue) / (maxValue - minValue)) * height;
+  const targetBottom =
+    height - ((70 - minValue) / (maxValue - minValue)) * height;
 
   return (
     <div className="mt-3 rounded-3xl bg-white">
       <svg viewBox={`0 0 ${width + 22} ${height}`} className="h-28 w-full">
-        <rect x="22" y={targetTop} width={width} height={targetBottom - targetTop} className="fill-emerald-100" />
-        <path d={path} fill="none" className="stroke-[#3f63f4]" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <rect
+          x="22"
+          y={targetTop}
+          width={width}
+          height={targetBottom - targetTop}
+          className="fill-emerald-100"
+        />
+
+        <path
+          d={path}
+          fill="none"
+          className="stroke-[#0b5787]"
+          strokeWidth="2.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
         {points.map((point, index) => (
-          <circle key={index} cx={point.x + 22} cy={point.y} r="3.5" className="fill-[#3f63f4]" />
+          <circle
+            key={index}
+            cx={point.x + 22}
+            cy={point.y}
+            r="3.5"
+            className="fill-[#0b5787]"
+          />
         ))}
       </svg>
 
@@ -630,18 +911,22 @@ function RecordList({ records }: { records: RecordItem[] }) {
       <h2 className="text-lg font-black">최근 기록</h2>
 
       <div className="mt-4 divide-y divide-slate-100">
-        {records.slice().reverse().slice(0, 3).map((item, i) => (
-          <div key={i} className="py-4 text-sm">
-            <div className="flex justify-between">
-              <p>
-                <span className="text-2xl font-black">{item.glucose}</span>
-                <span className="ml-2 text-slate-500">mg/dL</span>
-              </p>
-              <p className="text-base text-slate-700">{item.time}</p>
+        {records
+          .slice()
+          .reverse()
+          .slice(0, 3)
+          .map((item, i) => (
+            <div key={i} className="py-4 text-sm">
+              <div className="flex justify-between">
+                <p>
+                  <span className="text-2xl font-black">{item.glucose}</span>
+                  <span className="ml-2 text-slate-500">mg/dL</span>
+                </p>
+                <p className="text-base text-slate-700">{item.time}</p>
+              </div>
+              <p className="mt-2 text-slate-500">메모: {item.memo}</p>
             </div>
-            <p className="mt-2 text-slate-500">메모: {item.memo}</p>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );
@@ -650,7 +935,11 @@ function RecordList({ records }: { records: RecordItem[] }) {
 function PageHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <div className="flex items-center gap-3">
-      <button type="button" onClick={onBack} className="rounded-2xl bg-white px-4 py-2 text-sm font-black shadow-sm active:scale-[0.98]">
+      <button
+        type="button"
+        onClick={onBack}
+        className="rounded-2xl bg-white px-4 py-2 text-sm font-black shadow-sm active:scale-[0.98]"
+      >
         ←
       </button>
       <h1 className="flex-1 text-center text-xl font-black">{title}</h1>
@@ -663,7 +952,7 @@ function AlertBox({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-[2rem] bg-white p-5 shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="mt-1 h-3 w-3 rounded-full bg-slate-800" />
+        <div className="mt-1 h-3 w-3 rounded-full bg-[#0b5787]" />
         <div>
           <p className="font-black">{title}</p>
           <p className="mt-1 text-sm leading-6 text-slate-500">{text}</p>
