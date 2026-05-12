@@ -102,7 +102,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#eef4fb] px-5 py-6 text-slate-950">
+    <main className="min-h-screen bg-gradient-to-b from-[#edf5fb] to-[#f8fbff] px-5 py-6 text-slate-950">
       <section className="mx-auto max-w-md space-y-5">
         {screen === "home" && (
           <HomeScreen
@@ -146,29 +146,29 @@ function HomeScreen({
           onClick={goPatientEdit}
           className="text-left active:scale-[0.98]"
         >
-          <h1 className="mt-1 text-4xl font-black tracking-tight text-slate-950">
+          <h1 className="mt-1 text-4xl font-black tracking-tight text-[#07142f]">
             {patient.name}
           </h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">
+          <p className="mt-1 text-sm font-semibold text-slate-500">
             {patient.gender} · {patient.birth}
           </p>
         </button>
 
         <div className="flex gap-2">
-          <IconButton label="알림" icon="🔔" onClick={goAlerts} />
-          <IconButton label="설정" icon="⚙" onClick={goSettings} />
+          <TopTextButton label="알림" onClick={goAlerts} />
+          <TopTextButton label="설정" onClick={goSettings} />
         </div>
       </div>
 
-      <div className="rounded-[2.25rem] bg-white p-5 shadow-[0_18px_45px_rgba(31,64,104,0.10)]">
+      <div className="rounded-[2.25rem] bg-white p-5 shadow-[0_20px_55px_rgba(30,76,120,0.12)]">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-sm font-bold text-slate-400">현재 혈당</p>
+            <p className="text-sm font-black text-[#4b83b5]">현재 혈당</p>
             <div className="mt-2 flex items-end gap-2">
-              <span className="text-7xl font-black tracking-tight">
+              <span className="text-7xl font-black tracking-tight text-[#07142f]">
                 {latest}
               </span>
-              <span className="mb-3 text-lg font-bold text-slate-700">
+              <span className="mb-3 text-lg font-black text-slate-700">
                 mg/dL
               </span>
             </div>
@@ -193,7 +193,7 @@ function HomeScreen({
         <button
           type="button"
           onClick={goMetrics}
-          className="mt-5 w-full rounded-2xl bg-[#0b5787] py-4 text-sm font-black text-white shadow-[0_10px_24px_rgba(11,87,135,0.25)] active:scale-[0.98]"
+          className="mt-5 w-full rounded-2xl bg-[#285b8f] py-4 text-sm font-black text-white shadow-[0_12px_28px_rgba(40,91,143,0.28)] active:scale-[0.98]"
         >
           상세 지표 보기
         </button>
@@ -202,7 +202,7 @@ function HomeScreen({
       <button
         type="button"
         onClick={goRecord}
-        className="flex w-full items-center justify-between rounded-[2rem] bg-[#0b5787] px-5 py-5 text-left text-white shadow-[0_16px_35px_rgba(11,87,135,0.25)] active:scale-[0.98]"
+        className="flex w-full items-center justify-between rounded-[2rem] bg-[#285b8f] px-5 py-5 text-left text-white shadow-[0_16px_35px_rgba(40,91,143,0.25)] active:scale-[0.98]"
       >
         <div>
           <p className="text-2xl font-black">수기 입력</p>
@@ -216,34 +216,30 @@ function HomeScreen({
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl bg-[#f5f8fc] px-3 py-3">
-      <p className="text-[11px] font-bold text-slate-400">{label}</p>
-      <p className="mt-1 text-sm font-black text-slate-900">{value}</p>
-    </div>
-  );
-}
-
-function IconButton({
+function TopTextButton({
   label,
-  icon,
   onClick,
 }: {
   label: string;
-  icon: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex h-14 w-14 flex-col items-center justify-center rounded-2xl bg-white text-slate-900 shadow-[0_8px_20px_rgba(31,64,104,0.08)] active:scale-[0.96]"
-      aria-label={label}
+      className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-[#285b8f] shadow-[0_8px_22px_rgba(30,76,120,0.10)] active:scale-[0.96]"
     >
-      <span className="text-xl leading-none">{icon}</span>
-      <span className="mt-1 text-[10px] font-bold text-slate-500">{label}</span>
+      {label}
     </button>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-[#f3f7fb] px-3 py-3">
+      <p className="text-[11px] font-black text-[#7192ad]">{label}</p>
+      <p className="mt-1 text-sm font-black text-[#07142f]">{value}</p>
+    </div>
   );
 }
 
@@ -272,9 +268,9 @@ function SettingsScreen({ patient, goHome }: any) {
     <div className="space-y-5">
       <PageHeader title="설정" onBack={goHome} />
 
-      <div className="rounded-[2rem] bg-white p-5 shadow-sm">
+      <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(30,76,120,0.08)]">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eef6fb] text-2xl font-black text-[#0b5787]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#edf6fb] text-2xl font-black text-[#285b8f]">
             {patient.name.slice(0, 1)}
           </div>
           <div>
@@ -287,20 +283,20 @@ function SettingsScreen({ patient, goHome }: any) {
       </div>
 
       <SettingGroup>
-        <SettingRow title="환자 정보 관리" text="이름, 성별, 생년월일 수정" icon="○" />
-        <SettingRow title="알림 설정" text="저혈당, 고혈당, 누락 입력 알림" icon="◇" />
-        <SettingRow title="목표 혈당 범위" text="정상 범위 70~180mg/dL" icon="□" />
+        <SettingRow title="환자 정보 관리" text="이름, 성별, 생년월일 수정" />
+        <SettingRow title="알림 설정" text="저혈당, 고혈당, 누락 입력 알림" />
+        <SettingRow title="목표 혈당 범위" text="정상 범위 70~180mg/dL" />
       </SettingGroup>
 
       <SettingGroup>
-        <SettingRow title="웨어러블 연동" text="CGM / 스마트워치 데이터 연결" icon="⌁" />
-        <SettingRow title="데이터 동기화" text="최근 기록 자동 업데이트" icon="↻" />
-        <SettingRow title="의사용 보고서" text="1~2개월 혈당 리포트 생성" icon="▤" />
+        <SettingRow title="웨어러블 연동" text="CGM / 스마트워치 데이터 연결" />
+        <SettingRow title="데이터 동기화" text="최근 기록 자동 업데이트" />
+        <SettingRow title="의사용 보고서" text="1~2개월 혈당 리포트 생성" />
       </SettingGroup>
 
       <SettingGroup>
-        <SettingRow title="개인정보 보호" text="의료 데이터 보안 및 접근 권한" icon="⌾" />
-        <SettingRow title="앱 정보" text="Mediger Patient v1.0" icon="i" />
+        <SettingRow title="개인정보 보호" text="의료 데이터 보안 및 접근 권한" />
+        <SettingRow title="앱 정보" text="Mediger Patient v1.0" />
       </SettingGroup>
     </div>
   );
@@ -308,32 +304,22 @@ function SettingsScreen({ patient, goHome }: any) {
 
 function SettingGroup({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_12px_30px_rgba(31,64,104,0.07)]">
+    <div className="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_12px_30px_rgba(30,76,120,0.07)]">
       {children}
     </div>
   );
 }
 
-function SettingRow({
-  title,
-  text,
-  icon,
-}: {
-  title: string;
-  text: string;
-  icon: string;
-}) {
+function SettingRow({ title, text }: { title: string; text: string }) {
   return (
     <button
       type="button"
       onClick={() => alert(`${title} 기능은 추후 백엔드 연동 예정입니다.`)}
       className="flex w-full items-center gap-4 border-b border-slate-100 px-5 py-4 text-left last:border-b-0 active:bg-slate-50"
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f3f7fb] text-lg font-bold text-slate-600">
-        {icon}
-      </div>
+      <div className="h-10 w-1.5 rounded-full bg-[#8fb9dc]" />
       <div className="flex-1">
-        <p className="font-bold">{title}</p>
+        <p className="font-black text-[#07142f]">{title}</p>
         <p className="mt-0.5 text-sm text-slate-500">{text}</p>
       </div>
       <span className="text-2xl text-slate-300">›</span>
@@ -361,7 +347,7 @@ function PatientEditScreen({ patient, setPatient, goHome }: any) {
     <div className="space-y-5">
       <PageHeader title="환자 정보 수정" onBack={goHome} />
 
-      <div className="rounded-[2rem] bg-white p-5 shadow-sm">
+      <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(30,76,120,0.08)]">
         <div className="space-y-4">
           <InputLabel label="이름">
             <input
@@ -394,7 +380,7 @@ function PatientEditScreen({ patient, setPatient, goHome }: any) {
           <button
             type="button"
             onClick={savePatient}
-            className="w-full rounded-2xl bg-[#0b5787] py-4 font-black text-white shadow-sm active:scale-[0.98]"
+            className="w-full rounded-2xl bg-[#285b8f] py-4 font-black text-white shadow-[0_12px_28px_rgba(40,91,143,0.22)] active:scale-[0.98]"
           >
             수정 완료
           </button>
@@ -413,7 +399,7 @@ function InputLabel({
 }) {
   return (
     <div>
-      <p className="mb-2 text-sm font-bold text-slate-600">{label}</p>
+      <p className="mb-2 text-sm font-black text-slate-600">{label}</p>
       {children}
     </div>
   );
@@ -454,7 +440,7 @@ function RecordScreen({ records, setRecords, goHome }: any) {
     <div className="space-y-5">
       <PageHeader title="수기 입력" onBack={goHome} />
 
-      <div className="rounded-[2rem] bg-white p-5 shadow-sm">
+      <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(30,76,120,0.08)]">
         <p className="mb-4 text-sm leading-6 text-slate-500">
           누락된 혈당을 작성해주세요.
         </p>
@@ -485,7 +471,7 @@ function RecordScreen({ records, setRecords, goHome }: any) {
           <button
             type="button"
             onClick={addRecord}
-            className="w-full rounded-2xl bg-[#0b5787] py-4 font-black text-white shadow-sm active:scale-[0.98]"
+            className="w-full rounded-2xl bg-[#285b8f] py-4 font-black text-white shadow-[0_12px_28px_rgba(40,91,143,0.22)] active:scale-[0.98]"
           >
             기록 저장
           </button>
@@ -504,8 +490,8 @@ function MetricsScreen({ records, goHome }: any) {
     <div className="space-y-4">
       <PageHeader title="상세 지표" onBack={goHome} />
 
-      <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(31,64,104,0.07)]">
-        <div className="grid grid-cols-3 rounded-2xl bg-[#f1f5fa] p-1">
+      <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(30,76,120,0.07)]">
+        <div className="grid grid-cols-3 rounded-2xl bg-[#eef4fa] p-1">
           <ChartTab
             label="하루"
             active={chartType === "day"}
@@ -556,8 +542,8 @@ function MetricsScreen({ records, goHome }: any) {
         </div>
       </div>
 
-      <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(31,64,104,0.07)]">
-        <p className="text-sm font-bold text-[#0b5787]">AI 피드백</p>
+      <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(30,76,120,0.07)]">
+        <p className="text-sm font-black text-[#285b8f]">AI 피드백</p>
         <h2 className="mt-2 text-lg font-black">
           식사 이후 혈당이 급상승하는 패턴이 보여요!
         </h2>
@@ -579,20 +565,20 @@ function OutlierTable({ records }: { records: RecordItem[] }) {
   );
 
   return (
-    <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(31,64,104,0.07)]">
+    <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(30,76,120,0.07)]">
       <div className="mb-4 flex items-end justify-between">
         <div>
-          <p className="text-sm font-bold text-[#0b5787]">이상치 감지</p>
+          <p className="text-sm font-black text-[#285b8f]">이상치 감지</p>
           <h2 className="mt-2 text-lg font-black">오늘 감지된 이상 기록</h2>
         </div>
 
-        <div className="rounded-full bg-[#f1f5fa] px-3 py-1 text-xs font-bold text-slate-500">
+        <div className="rounded-full bg-[#eef4fa] px-3 py-1 text-xs font-black text-slate-500">
           총 {outliers.length}건
         </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white">
-        <div className="grid grid-cols-3 bg-[#f7f9fc] px-4 py-3 text-xs font-bold text-slate-500">
+        <div className="grid grid-cols-3 bg-[#f7f9fc] px-4 py-3 text-xs font-black text-slate-500">
           <span>시간</span>
           <span className="text-center">혈당</span>
           <span className="text-right">상태</span>
@@ -600,7 +586,7 @@ function OutlierTable({ records }: { records: RecordItem[] }) {
 
         {outliers.length === 0 ? (
           <div className="px-4 py-8 text-center">
-            <p className="text-sm font-bold text-slate-700">
+            <p className="text-sm font-black text-slate-700">
               감지된 이상치가 없습니다.
             </p>
             <p className="mt-1 text-xs text-slate-400">
@@ -617,7 +603,7 @@ function OutlierTable({ records }: { records: RecordItem[] }) {
                 key={`${item.time}-${index}`}
                 className="grid grid-cols-3 items-center border-t border-slate-100 px-4 py-4 text-sm"
               >
-                <span className="font-medium text-slate-600">{item.time}</span>
+                <span className="font-bold text-slate-600">{item.time}</span>
 
                 <span className="text-center">
                   <span className="font-black text-slate-950">
@@ -705,7 +691,9 @@ function ChartTab({
       type="button"
       onClick={onClick}
       className={`rounded-xl py-3 text-sm font-black active:scale-[0.98] ${
-        active ? "bg-white text-slate-950 shadow-sm" : "text-slate-500"
+        active
+          ? "bg-white text-[#285b8f] shadow-sm"
+          : "text-slate-500"
       }`}
     >
       {label}
@@ -795,7 +783,7 @@ function DailyLineChart({
         <path
           d={path}
           fill="none"
-          className="stroke-[#0b5787]"
+          className="stroke-[#285b8f]"
           strokeWidth="2.8"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -809,13 +797,13 @@ function DailyLineChart({
               cx={point.x + 22}
               cy={point.y}
               r={isOutlier ? "4" : "3"}
-              className={isOutlier ? "fill-red-500" : "fill-[#0b5787]"}
+              className={isOutlier ? "fill-red-500" : "fill-[#285b8f]"}
             />
           );
         })}
       </svg>
 
-      <div className="ml-7 mt-1 flex justify-between text-xs text-slate-500">
+      <div className="ml-7 mt-1 flex justify-between text-xs font-medium text-slate-500">
         <span>00:00</span>
         <span>06:00</span>
         <span>12:00</span>
@@ -879,7 +867,7 @@ function SimpleLineChart({
         <path
           d={path}
           fill="none"
-          className="stroke-[#0b5787]"
+          className="stroke-[#285b8f]"
           strokeWidth="2.8"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -891,12 +879,12 @@ function SimpleLineChart({
             cx={point.x + 22}
             cy={point.y}
             r="3.5"
-            className="fill-[#0b5787]"
+            className="fill-[#285b8f]"
           />
         ))}
       </svg>
 
-      <div className="ml-7 mt-1 flex justify-between text-xs text-slate-500">
+      <div className="ml-7 mt-1 flex justify-between text-xs font-medium text-slate-500">
         {data.map((item) => (
           <span key={item.label}>{item.label}</span>
         ))}
@@ -907,7 +895,7 @@ function SimpleLineChart({
 
 function RecordList({ records }: { records: RecordItem[] }) {
   return (
-    <div className="rounded-[2rem] bg-white p-5 shadow-sm">
+    <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(30,76,120,0.08)]">
       <h2 className="text-lg font-black">최근 기록</h2>
 
       <div className="mt-4 divide-y divide-slate-100">
@@ -922,7 +910,9 @@ function RecordList({ records }: { records: RecordItem[] }) {
                   <span className="text-2xl font-black">{item.glucose}</span>
                   <span className="ml-2 text-slate-500">mg/dL</span>
                 </p>
-                <p className="text-base text-slate-700">{item.time}</p>
+                <p className="text-base font-bold text-slate-700">
+                  {item.time}
+                </p>
               </div>
               <p className="mt-2 text-slate-500">메모: {item.memo}</p>
             </div>
@@ -938,7 +928,7 @@ function PageHeader({ title, onBack }: { title: string; onBack: () => void }) {
       <button
         type="button"
         onClick={onBack}
-        className="rounded-2xl bg-white px-4 py-2 text-sm font-black shadow-sm active:scale-[0.98]"
+        className="rounded-2xl bg-white px-4 py-2 text-sm font-black text-[#285b8f] shadow-[0_8px_22px_rgba(30,76,120,0.08)] active:scale-[0.98]"
       >
         ←
       </button>
@@ -950,11 +940,11 @@ function PageHeader({ title, onBack }: { title: string; onBack: () => void }) {
 
 function AlertBox({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] bg-white p-5 shadow-sm">
+    <div className="rounded-[2rem] bg-white p-5 shadow-[0_12px_30px_rgba(30,76,120,0.08)]">
       <div className="flex items-start gap-3">
-        <div className="mt-1 h-3 w-3 rounded-full bg-[#0b5787]" />
+        <div className="mt-1 h-3 w-3 rounded-full bg-[#285b8f]" />
         <div>
-          <p className="font-black">{title}</p>
+          <p className="font-black text-[#07142f]">{title}</p>
           <p className="mt-1 text-sm leading-6 text-slate-500">{text}</p>
         </div>
       </div>
