@@ -134,6 +134,27 @@ function PatternLegend({ activePatterns }: { activePatterns: Set<PatternType> })
   );
 }
 
+function GlucoseBoundaryGuide() {
+  return (
+    <div className="flex flex-wrap gap-x-5 gap-y-2 px-1 pb-1 text-[12px] font-medium text-gray-500">
+      <span className="flex items-center gap-1.5">
+        <span
+          className="inline-block w-5"
+          style={{ borderTop: "2px dashed #ef4444" }}
+        />
+        180 mg/dL: 고혈당 기준 / TAR 경계
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span
+          className="inline-block w-5"
+          style={{ borderTop: "2px dashed #2563eb" }}
+        />
+        70 mg/dL: 저혈당 기준 / TBR 경계
+      </span>
+    </div>
+  );
+}
+
 function AverageDayChart({
   data,
   patterns,
@@ -448,6 +469,7 @@ export default function DiagnosisReport({
         <SectionContainer>
           <BoxLabel>Glucose pattern analysis</BoxLabel>
           <AverageDayChart data={avgDayProfile} patterns={patterns} />
+          <GlucoseBoundaryGuide />
           <BoxLabel>감지 패턴 유형</BoxLabel>
           <PatternLegend activePatterns={activePatterns} />
           <TextPlaceholder />
