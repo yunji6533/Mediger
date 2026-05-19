@@ -1,0 +1,31 @@
+{
+  "patientInfo": {
+    "patientId": "013",
+    "name": "박민준",
+    "age": 54,
+    "gender": "M",
+    "diagnosis": "제2형 당뇨병 (인슐린 의존)",
+    "registeredAt": "2022-01-15"
+  },
+  "dailySummary": {
+    "date": "2024-02-27",
+    "avgGlucose": 142,
+    "tir": 62,
+    "tar": 28,
+    "tbr": 10,
+    "cv": 38,
+    "minGlucose": 58,
+    "maxGlucose": 312,
+    "mage": 65
+  },
+  "trendSummary": {
+    "period": "7d",
+    "avgGlucose": 148,
+    "tir": 60,
+    "tar": 30,
+    "tbr": 10,
+    "cv": 36,
+    "trend": "worsening"
+  },
+  "llmSummary": "최근 7일 동안 야간(00:00-06:00) 저혈당이 주 6회 반복되고 있으며, 저녁 식후(19:00-23:00) 고혈당도 지속적으로 관측되고 있습니다. 특히 03:00-04:00 시간대에 Level 2 저혈당(58 mg/dL 이하)이 빈번하게 발생합니다. TIR이 62%로 목표치(70%)에 미치지 못하고 있으며, 변동성(CV 38%)이 높은 상태입니다. 처방 재검토 및 담당 의사의 임상적 판단이 필요합니다."
+}

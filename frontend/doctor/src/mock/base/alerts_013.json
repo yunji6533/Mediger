@@ -1,0 +1,83 @@
+[
+  {
+    "id": "a1",
+    "patientId": "013",
+    "timestamp": "2024-02-27T03:15:00Z",
+    "type": "hypo",
+    "severity": "severe",
+    "value": 48,
+    "message": "심각한 저혈당 감지 — Level 2 (< 54 mg/dL)"
+  },
+  {
+    "id": "a2",
+    "patientId": "013",
+    "timestamp": "2024-02-27T21:00:00Z",
+    "type": "hyper",
+    "severity": "severe",
+    "value": 312,
+    "message": "위험 수준 고혈당 감지"
+  },
+  {
+    "id": "a3",
+    "patientId": "013",
+    "timestamp": "2024-02-27T20:45:00Z",
+    "type": "rapid_change",
+    "severity": "moderate",
+    "value": null,
+    "message": "30분 내 혈당 63 mg/dL 급상승"
+  },
+  {
+    "id": "a4",
+    "patientId": "013",
+    "timestamp": "2024-02-26T03:15:00Z",
+    "type": "hypo",
+    "severity": "severe",
+    "value": 51,
+    "message": "심각한 저혈당 감지 — Level 2 (< 54 mg/dL)"
+  },
+  {
+    "id": "a5",
+    "patientId": "013",
+    "timestamp": "2024-02-26T22:45:00Z",
+    "type": "hyper",
+    "severity": "severe",
+    "value": 305,
+    "message": "위험 수준 고혈당 감지"
+  },
+  {
+    "id": "a6",
+    "patientId": "013",
+    "timestamp": "2024-02-25T03:45:00Z",
+    "type": "hypo",
+    "severity": "moderate",
+    "value": 65,
+    "message": "저혈당 감지 — Level 1"
+  },
+  {
+    "id": "a7",
+    "patientId": "013",
+    "timestamp": "2024-02-25T20:15:00Z",
+    "type": "hyper",
+    "severity": "moderate",
+    "value": 288,
+    "message": "심각한 고혈당 감지"
+  },
+  {
+    "id": "a8",
+    "patientId": "013",
+    "timestamp": "2024-02-23T03:30:00Z",
+    "type": "hypo",
+    "severity": "moderate",
+    "value": 60,
+    "message": "저혈당 감지 — Level 1"
+  },
+  {
+    "id": "a9",
+    "patientId": "013",
+    "timestamp": "2024-02-24T19:30:00Z",
+    "type": "hyper",
+    "severity": "mild",
+    "value": 215,
+    "message": "고혈당 감지"
+  }
+]
