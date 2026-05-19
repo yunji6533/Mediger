@@ -1,0 +1,11 @@
+# Lambda 공통
+boto3
+opensearch-py
+requests-aws4auth
+
+# Simulator 전용
+pandas
+openpyxl
+
+# 로컬 테스트용
+python-dotenv
