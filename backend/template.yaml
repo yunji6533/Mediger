@@ -1,0 +1,261 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: MEDIGER - 당뇨 환자 관리 서비스 API
+
+# ──────────────────────────────────────────────────────────────────
+# 배포 방법:
+#   cd backend/
+#   sam build
+#   sam deploy --guided          # 첫 배포 (파라미터 입력)
+#   sam deploy                   # 이후 재배포
+# ──────────────────────────────────────────────────────────────────
+
+Parameters:
+  OpenSearchEndpoint:
+    Type: String
+    Description: "OpenSearch 도메인 엔드포인트 (e.g. search-mediger-xxxx.ap-northeast-2.es.amazonaws.com)"
+  BedrockKbId:
+    Type: String
+    Default: ""
+    Description: "Bedrock Knowledge Base ID (Phase 2 이후 입력)"
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 30
+    MemorySize: 256
+    Environment:
+      Variables:
+        OPENSEARCH_ENDPOINT: !Ref OpenSearchEndpoint
+        OPENSEARCH_REGION: !Ref AWS::Region
+        PATIENTS_TABLE: Patients
+        DOCTOR_NOTES_TABLE: DoctorNotes
+        PRESCRIPTIONS_TABLE: Prescriptions
+        BEDROCK_REGION: us-east-1
+        BEDROCK_MODEL_ID: anthropic.claude-haiku-20240307-v1:0
+        BEDROCK_KB_ID: !Ref BedrockKbId
+        FIREHOSE_STREAM: diabetes-cgm-stream
+
+Resources:
+
+  # ── API Gateway ──────────────────────────────────────────────────
+
+  MedigerApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: mediger-api
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key'"
+        AllowOrigin: "'*'"
+
+  # ── Lambda: 의사 API ─────────────────────────────────────────────
+  # 담당: 환자 목록/상세, 혈당 시계열, 알림, 패턴, 처방 이력
+
+  DoctorApiFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      FunctionName: mediger-doctor-api
+      Handler: handler.lambda_handler
+      CodeUri: lambdas/doctor_api/
+      Description: 의사 대시보드 API
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: Patients
+        - DynamoDBReadPolicy:
+            TableName: Prescriptions
+        - Statement:
+            - Effect: Allow
+              Action: [es:ESHttpGet, es:ESHttpPost]
+              Resource: "*"
+      Events:
+        # 환자 목록
+        GetPatients:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients
+            Method: GET
+        # 대시보드 요약
+        GetDashboardSummary:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /dashboard/summary
+            Method: GET
+        # 환자 상세
+        GetPatientDetail:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}
+            Method: GET
+        # 혈당: 일간
+        GetGlucoseDay:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/glucose/day
+            Method: GET
+        # 혈당: 주간
+        GetGlucoseWeek:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/glucose/week
+            Method: GET
+        # 혈당: 멀티데이 (최대 30일)
+        GetGlucoseMultiday:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/glucose/multiday
+            Method: GET
+        # 알림 로그
+        GetAlerts:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/alerts
+            Method: GET
+        # 임계치 초과 이벤트
+        GetThresholdAlerts:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/alerts/threshold
+            Method: GET
+        # 패턴 로그
+        GetPatterns:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/patterns
+            Method: GET
+        # 처방 이력
+        GetRxHistory:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/rx/history
+            Method: GET
+
+  # ── Lambda: 환자 API ─────────────────────────────────────────────
+  # 담당: 당일 혈당, 수기 입력, 지표 (환자용)
+
+  PatientApiFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      FunctionName: mediger-patient-api
+      Handler: handler.lambda_handler
+      CodeUri: lambdas/patient_api/
+      Description: 환자 앱 API
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [es:ESHttpGet, es:ESHttpPost, es:ESHttpPut]
+              Resource: "*"
+      Events:
+        # 당일 혈당 시계열
+        GetToday:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/today
+            Method: GET
+        # 수기 입력
+        PostInput:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/input
+            Method: POST
+        # TIR/TAR/TBR 지표
+        GetMetrics:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/metrics
+            Method: GET
+
+  # ── Lambda: Orchestrator (AI 보고서) ─────────────────────────────
+  # 담당: Bedrock LLM 호출 - 패턴/이상치/처방 추천 보고서
+
+  OrchestratorFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      FunctionName: mediger-orchestrator
+      Handler: handler.lambda_handler
+      CodeUri: lambdas/orchestrator/
+      Timeout: 60
+      MemorySize: 512
+      Description: AI 보고서 API (Bedrock LLM)
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: Patients
+        - DynamoDBReadPolicy:
+            TableName: Prescriptions
+        - DynamoDBReadPolicy:
+            TableName: DoctorNotes
+        - Statement:
+            - Effect: Allow
+              Action: [es:ESHttpGet, es:ESHttpPost]
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:Retrieve
+                - bedrock-agent-runtime:Retrieve
+              Resource: "*"
+      Events:
+        # AI 보고서 1: 혈당 패턴
+        GetReportPattern:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/report/pattern
+            Method: GET
+        # AI 보고서 2: 이상치
+        GetReportAnomaly:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/report/anomaly
+            Method: GET
+        # AI 보고서 3: 처방 추천 (상세)
+        GetReportRecommendation:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/report/recommendation
+            Method: GET
+        # 처방 추천 (프론트 단순 포맷)
+        GetRecommendations:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MedigerApi
+            Path: /patients/{id}/recommendations
+            Method: GET
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Gateway URL → NEXT_PUBLIC_API_URL에 이 값 입력"
+    Value: !Sub "https://${MedigerApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+    Export:
+      Name: MedigerApiEndpoint
+
+  DoctorApiFunctionArn:
+    Value: !GetAtt DoctorApiFunction.Arn
+
+  PatientApiFunctionArn:
+    Value: !GetAtt PatientApiFunction.Arn
+
+  OrchestratorFunctionArn:
+    Value: !GetAtt OrchestratorFunction.Arn

@@ -1,7 +1,8 @@
 # Lambda 패키징 스크립트 (PowerShell)
-$ROOT = "c:\Users\joguk\Desktop\aws project\project-back"
+# TODO: 아래 경로를 실제 Mediger 프로젝트 루트로 맞추세요
+$ROOT = "c:\Users\joguk\Desktop\aws project\Mediger"
 $BACKEND = "$ROOT\backend"
-$DIST = "$ROOT\dist"
+$DIST = "$ROOT\backend\dist"
 
 if (Test-Path $DIST) { Remove-Item -Recurse -Force $DIST }
 New-Item -ItemType Directory -Path $DIST | Out-Null

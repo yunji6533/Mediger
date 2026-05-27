@@ -33,6 +33,9 @@ def lambda_handler(event, context):
             return resp(200, get_anomaly_report(patient_id))
         elif path.endswith('/recommendation'):
             return resp(200, get_recommendation_report(patient_id))
+        # 프론트엔드 /patients/{id}/recommendations 경로 (단순 Recommendation[] 포맷)
+        elif path.endswith('/recommendations'):
+            return resp(200, get_recommendations_simple(patient_id))
         else:
             return resp(404, {'error': 'Not found'})
     except Exception as e:
@@ -354,7 +357,31 @@ def _retrieve_from_kb(query: str) -> dict:
     return {'text': text, 'sources': sources}
 
 
-def resp(status: int, body: dict) -> dict:
+# ── 처방 추천 단순 포맷 (프론트엔드 Recommendation[] 타입에 맞춤) ──────────────
+
+def get_recommendations_simple(patient_id: str) -> list:
+    full = get_recommendation_report(patient_id)
+    text = full['recommendation']['text']
+    sources = full['recommendation']['sources']
+
+    # "N순위: [약물명] - [근거: ...]" 형태 파싱
+    lines = [l.strip() for l in text.split('\n') if '순위:' in l]
+    recommendations = []
+    for i, line in enumerate(lines[:4]):
+        parts = line.split(' - ', 1)
+        drug_part = parts[0].split(':', 1)[-1].strip() if ':' in parts[0] else parts[0].strip()
+        desc_part = parts[1].strip() if len(parts) > 1 else drug_part
+        source_info = sources[i] if i < len(sources) else {}
+        recommendations.append({
+            'rank': i + 1,
+            'source': source_info.get('title', 'ADA Standards of Care 2024'),
+            'description': desc_part,
+        })
+
+    return recommendations
+
+
+def resp(status: int, body) -> dict:
     return {
         'statusCode': status,
         'headers': {
