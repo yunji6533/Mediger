@@ -10,8 +10,8 @@ OPENSEARCH_ENDPOINT = os.environ.get(
     'OPENSEARCH_ENDPOINT',
     'search-mediger-opensearch-aira7s6sswtm2lpup3snm2bfem.ap-northeast-2.es.amazonaws.com'
 )
-OPENSEARCH_USER = os.environ.get('OPENSEARCH_USER', 'MEDIGER')
-OPENSEARCH_PASSWORD = os.environ.get('OPENSEARCH_PASSWORD', 'Mediger1234!')
+OPENSEARCH_USER = os.environ.get('OPENSEARCH_USER', '')
+OPENSEARCH_PASSWORD = os.environ.get('OPENSEARCH_PASSWORD', '')
 
 RAW_INDEX = 'glucose-raw'
 RISK_INDEX = 'risk-status'
