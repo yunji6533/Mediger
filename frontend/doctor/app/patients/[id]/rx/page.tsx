@@ -7,6 +7,8 @@ import {
   getPatternLogs,
   getThresholdAlerts,
   getDiagnosisRecommendations,
+  getPatternAnalysis,
+  getAnomalyAnalysis,
 } from "@/src/lib/api";
 import { getAverageDayProfile } from "@/src/lib/mockData";
 import DiagnosisReport from "@/src/components/patient/DiagnosisReport";
@@ -18,13 +20,15 @@ export default async function RxPage({
 }) {
   const { id } = await params;
 
-  const [detail, multidayData, patterns, thresholdEvents, recommendations] =
+  const [detail, multidayData, patterns, thresholdEvents, recommendations, patternAnalysis, anomalyAnalysis] =
     await Promise.all([
       getPatientDetail(id),
       getGlucoseMultidayData(id),
       getPatternLogs(id),
       getThresholdAlerts(id),
       getDiagnosisRecommendations(id),
+      getPatternAnalysis(id),
+      getAnomalyAnalysis(id),
     ]);
 
   if (!detail) notFound();
@@ -56,6 +60,8 @@ export default async function RxPage({
         thresholdEvents={thresholdEvents}
         patterns={patterns}
         recommendations={recommendations}
+        patternAnalysis={patternAnalysis}
+        anomalyAnalysis={anomalyAnalysis}
       />
     </div>
   );

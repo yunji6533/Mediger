@@ -46,6 +46,20 @@ def replay_patient(patient_id: str, file_path: str) -> None:
 
     df = df.dropna(subset=['CGM (mg / dl)']).sort_values('Date').reset_index(drop=True)
 
+    # 실제 날짜를 보존하되 마지막 측정값 = 지금으로 오프셋
+    # → timeseries/today API의 날짜 필터에 잡히도록
+    now = datetime.now(timezone.utc)
+    max_date = pd.Timestamp(df['Date'].max())
+    if max_date.tzinfo is None:
+        max_date = max_date.tz_localize('UTC')
+    offset = now - max_date
+
+    def to_utc_iso(raw_date) -> str:
+        ts = pd.Timestamp(raw_date)
+        if ts.tzinfo is None:
+            ts = ts.tz_localize('UTC')
+        return (ts + offset).isoformat()
+
     client = get_os_client()
 
     def gen_actions():
@@ -57,7 +71,7 @@ def replay_patient(patient_id: str, file_path: str) -> None:
                 '_index': INDEX,
                 '_source': {
                     'patient_id': patient_id,
-                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'timestamp': to_utc_iso(row['Date']),
                     'glucose': round(float(glucose_val), 1),
                     'device_id': 'freestyle_libre_h',
                     'source': 'simulator',

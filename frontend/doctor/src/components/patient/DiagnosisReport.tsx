@@ -87,12 +87,27 @@ function BoxLabel({ children }: { children: ReactNode }) {
   );
 }
 
-function TextPlaceholder() {
+function AnalysisText({ text }: { text?: string }) {
+  if (!text) {
+    return (
+      <ContentBox>
+        <p className="text-[13px] text-gray-400 text-center py-5">
+          (분석 텍스트를 불러오는 중...)
+        </p>
+      </ContentBox>
+    );
+  }
   return (
-    <ContentBox>
-      <p className="text-[13px] text-gray-400 text-center py-5">
-        (해당 영역은 진단 report에 포함될 분석 결과 텍스트가 들어갈 자리입니다.)
-      </p>
+    <ContentBox className="px-5 py-4">
+      {text.split("\n").map((line, i) =>
+        line.trim() === "" ? (
+          <div key={i} className="h-2" />
+        ) : (
+          <p key={i} className="text-[13px] text-gray-700 leading-relaxed">
+            {line}
+          </p>
+        )
+      )}
     </ContentBox>
   );
 }
@@ -438,6 +453,8 @@ interface Props {
   thresholdEvents: ThresholdEvent[];
   patterns: PatternLog[];
   recommendations: Recommendation[];
+  patternAnalysis?: string;
+  anomalyAnalysis?: string;
 }
 
 export default function DiagnosisReport({
@@ -447,6 +464,8 @@ export default function DiagnosisReport({
   thresholdEvents,
   patterns,
   recommendations,
+  patternAnalysis,
+  anomalyAnalysis,
 }: Props) {
   const activePatterns = new Set(patterns.map((p) => p.patternType));
   const [modalOpen, setModalOpen] = useState(false);
@@ -472,7 +491,7 @@ export default function DiagnosisReport({
           <GlucoseBoundaryGuide />
           <BoxLabel>감지 패턴 유형</BoxLabel>
           <PatternLegend activePatterns={activePatterns} />
-          <TextPlaceholder />
+          <AnalysisText text={patternAnalysis} />
         </SectionContainer>
       </div>
 
@@ -482,7 +501,7 @@ export default function DiagnosisReport({
         <SectionContainer>
           <BoxLabel>Outlier pattern graph</BoxLabel>
           <OutlierRawChart data={lastDayData} />
-          <TextPlaceholder />
+          <AnalysisText text={anomalyAnalysis} />
           <button
             onClick={() => setModalOpen(true)}
             className="inline-flex items-center gap-2 rounded border border-gray-300 bg-white px-4 py-2 text-[13px] font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
