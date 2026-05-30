@@ -199,7 +199,7 @@ export default function PatientAnalytics({
   dayData,
   weekData,
 }: Props) {
-  const maxDays = Math.min(10, Math.max(1, weekData.length));
+  const maxDays = Math.min(14, Math.max(1, weekData.length));
   const rangeOptions = Array.from({ length: maxDays }, (_, index) => index + 1);
   const [rangeDays, setRangeDays] = useState(maxDays);
   const [glucoseView, setGlucoseView] = useState<GlucoseView>("all");
@@ -526,6 +526,45 @@ export default function PatientAnalytics({
         </div>
       </div>
 
+      <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-sm font-semibold text-gray-800">
+          전체 평균 요약
+        </h2>
+        <div className="overflow-hidden rounded-lg border border-gray-200">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  지표
+                </th>
+                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  값
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {[
+                ["평균 TIR", `${averages.tir}%`],
+                ["평균 TBR", `${averages.tbr}%`],
+                ["평균 TAR", `${averages.tar}%`],
+                ["평균 CV", `${averages.cv}%`],
+                ["평균 Mean Glucose", `${averages.meanGlucose} mg/dL`],
+                ["평균 GMI", `${averages.gmi}%`],
+              ].map(([label, value]) => (
+                <tr key={label} className="hover:bg-gray-50/70">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
+                    {label}
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-gray-900">
+                    {value}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       {chartCard(
         "혈당 시계열 그래프",
         <div className="flex items-center gap-2">
@@ -657,45 +696,6 @@ export default function PatientAnalytics({
           />
         </div>
       )}
-
-      <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-sm font-semibold text-gray-800">
-          전체 평균 요약
-        </h2>
-        <div className="overflow-hidden rounded-lg border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                  지표
-                </th>
-                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                  값
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {[
-                ["평균 TIR", `${averages.tir}%`],
-                ["평균 TBR", `${averages.tbr}%`],
-                ["평균 TAR", `${averages.tar}%`],
-                ["평균 CV", `${averages.cv}%`],
-                ["평균 Mean Glucose", `${averages.meanGlucose} mg/dL`],
-                ["평균 GMI", `${averages.gmi}%`],
-              ].map(([label, value]) => (
-                <tr key={label} className="hover:bg-gray-50/70">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
-                    {label}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-gray-900">
-                    {value}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
 
       {modal && (
         <ChartModal title={modalTitle} onClose={() => setModal(null)}>

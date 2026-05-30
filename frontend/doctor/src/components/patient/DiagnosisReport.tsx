@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import {
   LineChart,
@@ -15,7 +15,7 @@ import {
 import { ChartFrame } from "@/src/components/ui/ChartFrame";
 import type {
   AverageDayPoint,
-  GlucoseDayPoint,
+  GlucoseMultidayData,
   ThresholdEvent,
   PatternLog,
   PatternType,
@@ -246,7 +246,32 @@ function AverageDayChart({
 
 // ─── Section 2: Raw outlier chart ────────────────────────────
 
-function OutlierRawChart({ data }: { data: GlucoseDayPoint[] }) {
+function OutlierRawChart({ data }: { data: GlucoseMultidayData[] }) {
+  const flat = useMemo(
+    () =>
+      data.flatMap((day) =>
+        day.readings.map((r) => ({
+          datetime: `${day.date.slice(5)} ${r.time}`,
+          date: day.date,
+          time: r.time,
+          value: r.value,
+        }))
+      ),
+    [data]
+  );
+
+  // X축에 날짜만 표시. 각 날짜 첫 포인트의 index를 tick으로 사용.
+  const dayStartTicks = useMemo(() => {
+    const seen = new Set<string>();
+    return flat
+      .filter((p) => {
+        if (seen.has(p.date)) return false;
+        seen.add(p.date);
+        return true;
+      })
+      .map((p) => p.datetime);
+  }, [flat]);
+
   return (
     <ContentBox>
       <ChartFrame className="h-64 px-3 pt-4 pb-1">
@@ -254,11 +279,16 @@ function OutlierRawChart({ data }: { data: GlucoseDayPoint[] }) {
           <LineChart
             width={width}
             height={height}
-            data={data}
+            data={flat}
             margin={{ top: 6, right: 32, bottom: 4, left: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-            <XAxis dataKey="time" ticks={HOUR_TICKS} tick={{ fontSize: 11, fill: "#6b7280" }} />
+            <XAxis
+              dataKey="datetime"
+              ticks={dayStartTicks}
+              tick={{ fontSize: 10, fill: "#6b7280" }}
+              tickFormatter={(v: string) => v.slice(0, 5)}
+            />
             <YAxis domain={[40, 360]} tick={{ fontSize: 11, fill: "#6b7280" }} width={42} />
             <Tooltip
               formatter={(v) => [`${v} mg/dL`, "혈당"]}
@@ -271,15 +301,16 @@ function OutlierRawChart({ data }: { data: GlucoseDayPoint[] }) {
               type="monotone"
               dataKey="value"
               stroke="#94a3b8"
-              strokeWidth={1.5}
+              strokeWidth={1}
+              isAnimationActive={false}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               dot={(props: any) => {
                 const { cx, cy, payload, index } = props;
                 if (payload.value > 180)
-                  return <circle key={index} cx={cx} cy={cy} r={5} fill="#ef4444" stroke="#fff" strokeWidth={1.5} />;
+                  return <circle key={index} cx={cx} cy={cy} r={3.5} fill="#ef4444" stroke="#fff" strokeWidth={1} />;
                 if (payload.value < 70)
-                  return <circle key={index} cx={cx} cy={cy} r={5} fill="#2563eb" stroke="#fff" strokeWidth={1.5} />;
-                return <circle key={index} cx={cx} cy={cy} r={2} fill="#94a3b8" />;
+                  return <circle key={index} cx={cx} cy={cy} r={3.5} fill="#2563eb" stroke="#fff" strokeWidth={1} />;
+                return <circle key={index} cx={cx} cy={cy} r={0} fill="transparent" />;
               }}
               activeDot={{ r: 5 }}
             />
@@ -449,7 +480,7 @@ function RecommendationGrid({ items }: { items: Recommendation[] }) {
 interface Props {
   patientName: string;
   avgDayProfile: AverageDayPoint[];
-  lastDayData: GlucoseDayPoint[];
+  multidayData: GlucoseMultidayData[];
   thresholdEvents: ThresholdEvent[];
   patterns: PatternLog[];
   recommendations: Recommendation[];
@@ -460,7 +491,7 @@ interface Props {
 export default function DiagnosisReport({
   patientName,
   avgDayProfile,
-  lastDayData,
+  multidayData,
   thresholdEvents,
   patterns,
   recommendations,
@@ -500,7 +531,7 @@ export default function DiagnosisReport({
         <h3 className="text-xl font-bold text-gray-900 mb-4">2. 이상치 분석</h3>
         <SectionContainer>
           <BoxLabel>Outlier pattern graph</BoxLabel>
-          <OutlierRawChart data={lastDayData} />
+          <OutlierRawChart data={multidayData} />
           <AnalysisText text={anomalyAnalysis} />
           <button
             onClick={() => setModalOpen(true)}

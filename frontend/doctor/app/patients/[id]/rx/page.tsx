@@ -34,7 +34,6 @@ export default async function RxPage({
   if (!detail) notFound();
 
   const avgDayProfile = getAverageDayProfile(multidayData);
-  const lastDayData = multidayData[multidayData.length - 1]?.readings ?? [];
 
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8">
@@ -56,7 +55,7 @@ export default async function RxPage({
       <DiagnosisReport
         patientName={detail.patientInfo.name}
         avgDayProfile={avgDayProfile}
-        lastDayData={lastDayData}
+        multidayData={multidayData}
         thresholdEvents={thresholdEvents}
         patterns={patterns}
         recommendations={recommendations}
