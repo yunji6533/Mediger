@@ -5,6 +5,7 @@ import {
   getPatientDetail,
   getGlucoseDayData,
   getGlucoseWeekData,
+  getGlucoseMultidayData,
   getPatients,
 } from "@/src/lib/api";
 import RiskBadge from "@/src/components/ui/RiskBadge";
@@ -17,10 +18,11 @@ export default async function PatientDetailPage({
 }) {
   const { id } = await params;
 
-  const [detail, dayData, weekData, patients] = await Promise.all([
+  const [detail, dayData, weekData, multidayData, patients] = await Promise.all([
     getPatientDetail(id),
     getGlucoseDayData(id),
     getGlucoseWeekData(id),
+    getGlucoseMultidayData(id),
     getPatients(),
   ]);
 
@@ -65,6 +67,7 @@ export default async function PatientDetailPage({
         dailySummary={dailySummary}
         dayData={dayData}
         weekData={weekData}
+        multidayData={multidayData}
       />
     </div>
   );

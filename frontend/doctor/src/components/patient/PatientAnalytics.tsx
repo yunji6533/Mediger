@@ -17,7 +17,11 @@ import {
   YAxis,
 } from "recharts";
 import type { DailySummary } from "@/src/types";
-import type { GlucoseDayPoint, GlucoseWeekPoint } from "@/src/types";
+import type {
+  GlucoseDayPoint,
+  GlucoseMultidayData,
+  GlucoseWeekPoint,
+} from "@/src/types";
 import { ChartFrame, ChartRenderer } from "@/src/components/ui/ChartFrame";
 
 type GlucoseView = "day" | "all";
@@ -26,6 +30,7 @@ interface Props {
   dailySummary: DailySummary;
   dayData: GlucoseDayPoint[];
   weekData: GlucoseWeekPoint[];
+  multidayData: GlucoseMultidayData[];
 }
 
 interface TirPoint extends GlucoseWeekPoint {
@@ -60,6 +65,28 @@ function toShortDate(date: string) {
   return `${String(parsed.getMonth() + 1).padStart(2, "0")}/${String(
     parsed.getDate()
   ).padStart(2, "0")}`;
+}
+
+function findDayReadings(
+  multidayData: GlucoseMultidayData[],
+  date: string,
+  fallback: GlucoseDayPoint[]
+) {
+  return (
+    multidayData.find((day) => day.date === date || toShortDate(day.date) === date)
+      ?.readings ?? fallback
+  );
+}
+
+function timeTickInterval(pointCount: number) {
+  return Math.max(0, Math.ceil(pointCount / 8) - 1);
+}
+
+function timeToMinutes(time: string) {
+  const normalized = time.includes("T") ? time.slice(11, 16) : time;
+  const [hours, minutes] = normalized.split(":").map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  return hours * 60 + minutes;
 }
 
 function chartCard(title: string, action: ReactNode, children: ReactNode) {
@@ -198,6 +225,7 @@ export default function PatientAnalytics({
   dailySummary,
   dayData,
   weekData,
+  multidayData,
 }: Props) {
   const maxDays = Math.min(14, Math.max(1, weekData.length));
   const rangeOptions = Array.from({ length: maxDays }, (_, index) => index + 1);
@@ -215,12 +243,35 @@ export default function PatientAnalytics({
     () => rangeData.map((point) => point.date),
     [rangeData]
   );
-  const [dayDate, setDayDate] = useState(
+  const [glucoseDayDate, setGlucoseDayDate] = useState(
     () => availableDates.at(-1) ?? toShortDate(dailySummary.date)
   );
-  const activeDayDate =
-    (availableDates.includes(dayDate) ? dayDate : availableDates.at(-1)) ??
-    toShortDate(dailySummary.date);
+  const [rocDate, setRocDate] = useState(
+    () => availableDates.at(-1) ?? toShortDate(dailySummary.date)
+  );
+  const defaultDayDate = availableDates.at(-1) ?? toShortDate(dailySummary.date);
+  const dayDateOptions =
+    availableDates.length > 0 ? availableDates : [defaultDayDate];
+  const activeGlucoseDayDate = dayDateOptions.includes(glucoseDayDate)
+    ? glucoseDayDate
+    : defaultDayDate;
+  const activeRocDate = dayDateOptions.includes(rocDate)
+    ? rocDate
+    : defaultDayDate;
+  const activeGlucoseDayReadings = useMemo(
+    () =>
+      findDayReadings(multidayData, activeGlucoseDayDate, dayData),
+    [activeGlucoseDayDate, dayData, multidayData]
+  );
+  const activeRocReadings = useMemo(
+    () =>
+      findDayReadings(multidayData, activeRocDate, dayData),
+    [activeRocDate, dayData, multidayData]
+  );
+  const glucoseTimeTickInterval = timeTickInterval(
+    activeGlucoseDayReadings.length
+  );
+  const rocTimeTickInterval = timeTickInterval(activeRocReadings.length);
 
   const tirData = useMemo(() => rangeData.map(buildTirPoint), [rangeData]);
 
@@ -239,28 +290,42 @@ export default function PatientAnalytics({
 
   const rocData = useMemo(
     () =>
-      dayData.map((point, index) => {
+      activeRocReadings.map((point, index) => {
         if (index === 0) return { time: point.time, roc: 0 };
+        const currentMinutes = timeToMinutes(point.time);
+        const previousMinutes = timeToMinutes(activeRocReadings[index - 1].time);
+        const deltaMinutes =
+          currentMinutes != null && previousMinutes != null
+            ? Math.max(
+                1,
+                currentMinutes >= previousMinutes
+                  ? currentMinutes - previousMinutes
+                  : currentMinutes + 24 * 60 - previousMinutes
+              )
+            : 60;
         return {
           time: point.time,
           roc: Number(
-            ((point.value - dayData[index - 1].value) / 60).toFixed(2)
+            (
+              (point.value - activeRocReadings[index - 1].value) /
+              deltaMinutes
+            ).toFixed(2)
           ),
         };
       }),
-    [dayData]
+    [activeRocReadings]
   );
 
   const dailyFallbackTir = useMemo(
     () =>
       buildTirPoint({
-        date: activeDayDate,
+        date: activeGlucoseDayDate,
         avg: dailySummary.avgGlucose,
         min: dailySummary.minGlucose,
         max: dailySummary.maxGlucose,
         tir: dailySummary.tir,
       }),
-    [dailySummary, activeDayDate]
+    [dailySummary, activeGlucoseDayDate]
   );
 
   const detailDate = selectedDate;
@@ -298,11 +363,16 @@ export default function PatientAnalytics({
       <LineChart
         width={width}
         height={height}
-        data={dayData}
+        data={activeGlucoseDayReadings}
         margin={{ top: 8, right: 24, bottom: 4, left: 0 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-        <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#6b7280" }} />
+        <XAxis
+          dataKey="time"
+          tick={{ fontSize: 11, fill: "#6b7280" }}
+          interval={glucoseTimeTickInterval}
+          minTickGap={16}
+        />
         <YAxis
           domain={[40, 360]}
           tick={{ fontSize: 11, fill: "#6b7280" }}
@@ -477,7 +547,8 @@ export default function PatientAnalytics({
         <XAxis
           dataKey="time"
           tick={{ fontSize: 11, fill: "#6b7280" }}
-          interval={2}
+          interval={rocTimeTickInterval}
+          minTickGap={16}
         />
         <YAxis
           domain={[-4, 4]}
@@ -587,11 +658,11 @@ export default function PatientAnalytics({
           </div>
           {glucoseView === "day" && (
             <select
-              value={activeDayDate}
-              onChange={(event) => setDayDate(event.target.value)}
+              value={activeGlucoseDayDate}
+              onChange={(event) => setGlucoseDayDate(event.target.value)}
               className="h-9 rounded-md border border-gray-200 bg-white px-2 text-sm font-medium text-gray-700"
             >
-              {availableDates.map((date) => (
+              {dayDateOptions.map((date) => (
                 <option key={date} value={date}>
                   {date}
                 </option>
@@ -667,11 +738,24 @@ export default function PatientAnalytics({
 
       {chartCard(
         "ROC (Rate of Change) 추이",
-        <ExpandButton
-          onClick={() =>
-            openModal("ROC (Rate of Change) 추이", renderRocChart)
-          }
-        />,
+        <div className="flex items-center gap-2">
+          <select
+            value={activeRocDate}
+            onChange={(event) => setRocDate(event.target.value)}
+            className="h-9 rounded-md border border-gray-200 bg-white px-2 text-sm font-medium text-gray-700"
+          >
+            {dayDateOptions.map((date) => (
+              <option key={date} value={date}>
+                {date}
+              </option>
+            ))}
+          </select>
+          <ExpandButton
+            onClick={() =>
+              openModal("ROC (Rate of Change) 추이", renderRocChart)
+            }
+          />
+        </div>,
         <div>
           <ChartFrame className="h-72 min-h-0 min-w-0">
             {renderRocChart}
