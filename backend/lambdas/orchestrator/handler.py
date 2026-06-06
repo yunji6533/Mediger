@@ -13,11 +13,14 @@ from shared.config import (
     VERY_LOW, LOW, HIGH, VERY_HIGH,
     DOCTOR_SYSTEM_PROMPT,
 )
+from rules import match_rules, H_QUERY_MAP, H_LABELS, rank_to_text
 
 # Lambda 외부 초기화 (재사용)
 os_client = get_os()
 bedrock_rt = get_runtime()
 bedrock_ag = get_agent()
+
+_DRUG_EFFECTS_CACHE = None   # 환자 무관 정적 데이터: 컨테이너당 1회만 KB 조회
 
 
 # lambda_handler : path 끝으로 분기해서 용도에 따른 resp 호출 ------------------------------------------------------------
@@ -47,46 +50,8 @@ def lambda_handler(event, context):
 # ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 def get_pattern_report(patient_id: str) -> dict:
-    # 24시간대별 혈당 패턴 집계 (최근 14일)
-    hourly_query = {
-        'query': {
-            'bool': {
-                'must': [
-                    {'term': {'patient_id': patient_id}},
-                    {'range': {'timestamp': {'gte': 'now-14d'}}},
-                ]
-            }
-        },
-        'aggs': {  # 집계하는 부분
-            'by_hour': {
-                'terms': {
-                    'script': "doc['timestamp'].value.getHour()",
-                    'size': 24,
-                    'order': {'_key': 'asc'},
-                },
-                'aggs': {
-                    'avg_glucose': {'avg': {'field': 'glucose'}}, # 시간대별 평균 혈당 
-                    'hypo_count': {'filter': {'range': {'glucose': {'lt': LOW}}}}, # 시간대별 저혈당 횟수
-                    'hyper_count': {'filter': {'range': {'glucose': {'gt': HIGH}}}}, # 시간대벼 ㄹ고혈당 횟수 
-                },
-            }
-        },
-        'size': 0,
-    }
-
-    result = os_client.search(index=IDX_RAW, body=hourly_query)
-    buckets = result['aggregations']['by_hour']['buckets']
-
-    # 해당 쿼리로부터의 output
-    hourly_pattern = [
-        {
-            'hour': b['key'],
-            'avg_glucose': round(b['avg_glucose']['value'] or 0, 1),
-            'hypo_count': b['hypo_count']['doc_count'],
-            'hyper_count': b['hyper_count']['doc_count'],
-        }
-        for b in buckets
-    ]
+    # 24시간대별 혈당 패턴 집계 (최근 14일) — recommendation과 공유 헬퍼 사용
+    hourly_pattern = _fetch_hourly_pattern(patient_id)
 
     prompt = f"""환자 ID: {patient_id}
 최근 14일 시간대별 혈당 패턴 (시간 | 평균혈당 | 저혈당횟수 | 고혈당횟수):
@@ -245,23 +210,42 @@ def get_recommendation_report(patient_id: str) -> dict:
         'tar': latest.get('tar'),
     }
 
+    # 2.5 혈당 패턴 → 규칙 기반 감별 가설(서열) + 이상치 건수(합산 도출)
+    hourly_pattern = _fetch_hourly_pattern(patient_id)
+    rule_result = match_rules(hourly_pattern)
+    ranked = rule_result['ranked_hypotheses']
+    matched_rule_ids = rule_result['matched_rule_ids']
+    hypo_count = sum(b['hypo_count'] for b in hourly_pattern)
+    hyper_count = sum(b['hyper_count'] for b in hourly_pattern)
+
     # 3. RAG: 가이드라인 청크 검색 (LLM이 자유 생성 못 하게 근거 제공)
+    #    1순위 감별 가설 키워드로 쿼리를 정밀화
+    top_keyword = H_QUERY_MAP.get(ranked[0], '') if ranked else ''
     rag_query = (
-        f"2형 당뇨 약물 치료 "
+        f"2형 당뇨 약물 치료 {top_keyword} "
         f"HbA1c {patient.get('hba1c', '')} "
         f"합병증 {patient.get('complications', '')}"
     )
     kb_result = _retrieve_from_kb(rag_query)
 
     # 4. LLM: 약물 우선순위만 (정량 추정 금지, 출처 강제)
+    #    감별 가설은 '어떤 문제를 우선 볼지' 맥락으로만 — 약물·수치는 가이드라인에서만
+    pattern_context = ""
+    if ranked:
+        pattern_context = (
+            f"\n혈당 패턴 감별 가설 (규칙 기반, 유력 순): {rank_to_text(ranked)}\n"
+            f"이상치 요약 (최근 14일): 저혈당 {hypo_count}건 / 고혈당 {hyper_count}건\n"
+        )
+
     prompt = f"""환자 정보:
 {json.dumps(patient_context, ensure_ascii=False, default=str)}
-
+{pattern_context}
 참고 가이드라인 청크:
 {kb_result['text']}
 
-위 가이드라인에 명시된 내용만을 기반으로 약물 추가 옵션 4개 우선순위를 제시해주세요.
-가이드라인에 없는 정량 수치는 절대 추정하지 마세요.
+아래 가이드라인 청크에 명시된 내용에 근거하여 약물 추가 옵션 4개의 우선순위를 제시하세요.
+위 '혈당 패턴 감별 가설'은 어떤 임상 문제를 우선 고려할지에 대한 맥락으로만 활용하고,
+약물 선택과 정량 수치는 반드시 가이드라인 청크에서만 가져오세요. 가이드라인에 없는 내용은 추정 금지.
 
 형식 (반드시 준수):
 1순위: [약물명/계열] - [근거: 가이드라인 출처]
@@ -270,20 +254,11 @@ def get_recommendation_report(patient_id: str) -> dict:
 4순위: [약물명/계열] - [근거: 가이드라인 출처]
 
 주의: 처방 최종 결정은 반드시 담당 의사가 합니다."""
-# 할루시에이션 방지 
     llm_result = _call_llm(prompt)
 
-    # 5. 약물 계열별 정량 효과 데이터: LLM 아님, KB에서 별도 검색
+    # 5. 약물 계열별 정량 효과 데이터: LLM 아님, KB에서 별도 검색 (정적 → 캐시)
     # 프론트엔드가 이 데이터로 처방 시나리오 비교 그래프 생성
-    drug_effects = []
-    for drug_class in ['SGLT-2 억제제', 'GLP-1 수용체 작용제', 'DPP-4 억제제', '메트포르민', '인슐린']:
-        effect = _retrieve_from_kb(f"{drug_class} HbA1c 감소 효과 임상 데이터")
-        if effect['text']:
-            drug_effects.append({
-                'drug_class': drug_class,
-                'effect_summary': effect['text'][:300],
-                'sources': effect['sources'],
-            })
+    drug_effects = _get_drug_effects()
 
     return {
         'patient_id': patient_id,
@@ -294,6 +269,10 @@ def get_recommendation_report(patient_id: str) -> dict:
         },
         'drug_effects': drug_effects,
         'disclaimer': '이 권고안은 의사의 임상적 판단을 보조하는 목적으로만 사용하며, 최종 처방 결정은 담당 의사가 합니다.',
+        # ── 추가 (서열, 소수점 없음) ──
+        'pattern_hypotheses': [{'code': h, 'label': H_LABELS.get(h, h)} for h in ranked],
+        'matched_rule_ids': matched_rule_ids,
+        'anomaly_summary': {'hypo_count': hypo_count, 'hyper_count': hyper_count},
     }
 
 
@@ -355,6 +334,58 @@ def _retrieve_from_kb(query: str) -> dict:
     ]
 
     return {'text': text, 'sources': sources}
+
+
+# ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+# 공유 헬퍼: 시간대별 패턴 조회 / 약물 효과 캐시
+# ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+def _fetch_hourly_pattern(patient_id: str) -> list:
+    """24시간대별 avg/hypo/hyper 집계 (최근 14일). pattern·recommendation 공유."""
+    try:
+        result = os_client.search(index=IDX_RAW, body={
+            'query': {'bool': {'must': [
+                {'term': {'patient_id': patient_id}},
+                {'range': {'timestamp': {'gte': 'now-14d'}}},
+            ]}},
+            'aggs': {'by_hour': {
+                'terms': {'script': "doc['timestamp'].value.getHour()", 'size': 24, 'order': {'_key': 'asc'}},
+                'aggs': {
+                    'avg_glucose': {'avg': {'field': 'glucose'}},
+                    'hypo_count': {'filter': {'range': {'glucose': {'lt': LOW}}}},
+                    'hyper_count': {'filter': {'range': {'glucose': {'gt': HIGH}}}},
+                },
+            }},
+            'size': 0,
+        })
+        return [
+            {'hour': b['key'],
+             'avg_glucose': round(b['avg_glucose']['value'] or 0, 1),
+             'hypo_count': b['hypo_count']['doc_count'],
+             'hyper_count': b['hyper_count']['doc_count']}
+            for b in result['aggregations']['by_hour']['buckets']
+        ]
+    except Exception:
+        return []
+
+
+def _get_drug_effects() -> list:
+    """약물 계열별 정량 효과(환자 무관 정적 데이터). 컨테이너당 1회만 KB 조회 후 재사용."""
+    global _DRUG_EFFECTS_CACHE
+    if _DRUG_EFFECTS_CACHE is not None:
+        return _DRUG_EFFECTS_CACHE
+    effects = []
+    for drug_class in ['SGLT-2 억제제', 'GLP-1 수용체 작용제', 'DPP-4 억제제', '메트포르민', '인슐린']:
+        effect = _retrieve_from_kb(f"{drug_class} HbA1c 감소 효과 임상 데이터")
+        if effect['text']:
+            effects.append({
+                'drug_class': drug_class,
+                'effect_summary': effect['text'][:300],
+                'sources': effect['sources'],
+            })
+    if effects:                       # 빈 결과(전송 실패/KB 미설정)는 캐시 안 함 → 다음 요청 재시도
+        _DRUG_EFFECTS_CACHE = effects
+    return effects
 
 
 # ── 처방 추천 단순 포맷 (프론트엔드 Recommendation[] 타입에 맞춤) ──────────────

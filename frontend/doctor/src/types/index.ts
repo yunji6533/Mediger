@@ -168,6 +168,26 @@ export interface Recommendation {
   description: string;
 }
 
+// 규칙 기반 감별 가설 (소수점 확률 없이 "유력 순" 서열만)
+export interface PatternHypothesis {
+  code: string;
+  label: string;
+}
+
+// 최근 14일 이상치 실측 건수
+export interface AnomalySummary {
+  hypoCount: number;
+  hyperCount: number;
+}
+
+// /report/recommendation 한 번 호출로 받는 진단 추천 페이지 데이터 묶음
+export interface DiagnosisReportData {
+  recommendations: Recommendation[];
+  hypotheses: PatternHypothesis[];
+  matchedRuleIds: string[];
+  anomalySummary: AnomalySummary | null;
+}
+
 // ─── Pattern Log Types ────────────────────────────────────────
 
 export type PatternType =

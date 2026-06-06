@@ -20,7 +20,7 @@ export default async function RxPage({
 }) {
   const { id } = await params;
 
-  const [detail, multidayData, patterns, thresholdEvents, recommendations, patternAnalysis, anomalyAnalysis] =
+  const [detail, multidayData, patterns, thresholdEvents, diagnosis, patternAnalysis, anomalyAnalysis] =
     await Promise.all([
       getPatientDetail(id),
       getGlucoseMultidayData(id),
@@ -58,7 +58,10 @@ export default async function RxPage({
         multidayData={multidayData}
         thresholdEvents={thresholdEvents}
         patterns={patterns}
-        recommendations={recommendations}
+        recommendations={diagnosis.recommendations}
+        hypotheses={diagnosis.hypotheses}
+        matchedRuleIds={diagnosis.matchedRuleIds}
+        anomalySummary={diagnosis.anomalySummary}
         patternAnalysis={patternAnalysis}
         anomalyAnalysis={anomalyAnalysis}
       />

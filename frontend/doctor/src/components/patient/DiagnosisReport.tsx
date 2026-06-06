@@ -20,6 +20,8 @@ import type {
   PatternLog,
   PatternType,
   Recommendation,
+  PatternHypothesis,
+  AnomalySummary,
 } from "@/src/types";
 
 const HOUR_TICKS = ["00:00","03:00","06:00","09:00","12:00","15:00","18:00","21:00"];
@@ -429,6 +431,54 @@ function OutlierLogModal({
   );
 }
 
+// ─── Section 2: 이상치 실측 건수 배지 ─────────────────────────
+
+function AnomalySummaryBadges({ summary }: { summary?: AnomalySummary | null }) {
+  if (!summary) return null;
+  return (
+    <div className="flex flex-wrap gap-2 px-1">
+      <span className="inline-flex items-center gap-1.5 rounded border border-blue-200 bg-blue-50 px-2.5 py-1 text-[12px] font-medium text-blue-700">
+        저혈당 <span className="font-bold">{summary.hypoCount}</span>건
+      </span>
+      <span className="inline-flex items-center gap-1.5 rounded border border-red-200 bg-red-50 px-2.5 py-1 text-[12px] font-medium text-red-700">
+        고혈당 <span className="font-bold">{summary.hyperCount}</span>건
+      </span>
+      <span className="self-center text-[11px] text-gray-400">최근 14일 실측</span>
+    </div>
+  );
+}
+
+// ─── Section 3: 규칙 기반 감별 가설 (유력 순) ─────────────────
+
+function HypothesisRanking({ hypotheses }: { hypotheses?: PatternHypothesis[] }) {
+  if (!hypotheses || hypotheses.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <BoxLabel>혈당 패턴 감별 가설 (규칙 기반, 유력 순)</BoxLabel>
+      <div className="flex flex-wrap items-center gap-1.5 px-1">
+        {hypotheses.map((h, i) => (
+          <span key={h.code} className="inline-flex items-center gap-1.5">
+            {i > 0 && <span className="text-gray-300 text-[12px]">›</span>}
+            <span
+              className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[12px] font-medium ${
+                i === 0
+                  ? "border-green-300 bg-green-50 text-green-700"
+                  : "border-gray-200 bg-white text-gray-600"
+              }`}
+            >
+              {i === 0 && <span className="text-[10px] font-bold">1순위</span>}
+              {h.label}
+            </span>
+          </span>
+        ))}
+      </div>
+      <p className="px-1 text-[11px] text-gray-400">
+        ※ 규칙 기반 감별 순서이며 확정 진단이 아닙니다. 최종 판단은 담당 의사가 합니다.
+      </p>
+    </div>
+  );
+}
+
 // ─── Section 3: 진단 추천 ─────────────────────────────────────
 
 function RecommendationGrid({ items }: { items: Recommendation[] }) {
@@ -484,6 +534,9 @@ interface Props {
   thresholdEvents: ThresholdEvent[];
   patterns: PatternLog[];
   recommendations: Recommendation[];
+  hypotheses?: PatternHypothesis[];
+  matchedRuleIds?: string[];
+  anomalySummary?: AnomalySummary | null;
   patternAnalysis?: string;
   anomalyAnalysis?: string;
 }
@@ -495,10 +548,28 @@ export default function DiagnosisReport({
   thresholdEvents,
   patterns,
   recommendations,
+  hypotheses,
+  matchedRuleIds,
+  anomalySummary,
   patternAnalysis,
   anomalyAnalysis,
 }: Props) {
-  const activePatterns = new Set(patterns.map((p) => p.patternType));
+  // (B) 백엔드 규칙 엔진이 판정한 패턴을 권위로 사용. 프론트 휴리스틱(getPatternLogs)은 폴백.
+  const matchedPatternTypes = (matchedRuleIds ?? []).filter(
+    (r): r is PatternType => r in PATTERN_LABELS
+  );
+  const effectivePatterns: PatternLog[] =
+    matchedPatternTypes.length > 0
+      ? matchedPatternTypes.map((t, i) => ({
+          id: `rule-${i}`,
+          patientId: "",
+          timestamp: "",
+          patternType: t,
+          severity: "medium",
+          value: null,
+        }))
+      : patterns;
+  const activePatterns = new Set(effectivePatterns.map((p) => p.patternType));
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -518,7 +589,7 @@ export default function DiagnosisReport({
         <h3 className="text-xl font-bold text-gray-900 mb-4">1. 혈당 패턴 분석</h3>
         <SectionContainer>
           <BoxLabel>Glucose pattern analysis</BoxLabel>
-          <AverageDayChart data={avgDayProfile} patterns={patterns} />
+          <AverageDayChart data={avgDayProfile} patterns={effectivePatterns} />
           <GlucoseBoundaryGuide />
           <BoxLabel>감지 패턴 유형</BoxLabel>
           <PatternLegend activePatterns={activePatterns} />
@@ -531,6 +602,7 @@ export default function DiagnosisReport({
         <h3 className="text-xl font-bold text-gray-900 mb-4">2. 이상치 분석</h3>
         <SectionContainer>
           <BoxLabel>Outlier pattern graph</BoxLabel>
+          <AnomalySummaryBadges summary={anomalySummary} />
           <OutlierRawChart data={multidayData} />
           <AnalysisText text={anomalyAnalysis} />
           <button
@@ -546,6 +618,7 @@ export default function DiagnosisReport({
       <div>
         <h3 className="text-xl font-bold text-gray-900 mb-4">3. 진단 추천</h3>
         <SectionContainer>
+          <HypothesisRanking hypotheses={hypotheses} />
           <RecommendationGrid items={recommendations} />
         </SectionContainer>
       </div>

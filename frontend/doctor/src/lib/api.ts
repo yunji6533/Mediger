@@ -11,6 +11,8 @@ import type {
   PatternType,
   ThresholdEvent,
   Recommendation,
+  PatternHypothesis,
+  DiagnosisReportData,
 } from "@/src/types";
 
 import patientsJson           from "@/src/mock/base/patients.json";
@@ -311,19 +313,45 @@ export async function getAnomalyAnalysis(id: string): Promise<string> {
 
 // ─── Diagnosis Recommendation ─────────────────────────────────
 
-export async function getDiagnosisRecommendations(id: string): Promise<Recommendation[]> {
-  if (!BASE_URL) return MOCK_RECOMMENDATIONS;
+// 진단 추천 페이지 데이터를 한 번의 호출(/report/recommendation)로 모두 가져온다.
+// (추천 텍스트 + 규칙 기반 감별 가설 서열 + 매칭 패턴 + 이상치 실측 건수)
+export async function getDiagnosisRecommendations(id: string): Promise<DiagnosisReportData> {
+  if (!BASE_URL) {
+    return {
+      recommendations: MOCK_RECOMMENDATIONS,
+      hypotheses: MOCK_HYPOTHESES,
+      matchedRuleIds: MOCK_MATCHED_RULE_IDS,
+      anomalySummary: MOCK_ANOMALY_SUMMARY,
+    };
+  }
   try {
     const data = await apiFetch<{
       recommendation: { text: string; sources: any[] };
+      pattern_hypotheses?: { code: string; label: string }[];
+      matched_rule_ids?: string[];
+      anomaly_summary?: { hypo_count: number; hyper_count: number };
     }>(`/api/patient/${id}/report/recommendation`);
+
     const recs = parseRecommendations(
       data.recommendation?.text ?? "",
       data.recommendation?.sources ?? []
     );
-    return recs.length > 0 ? recs : MOCK_RECOMMENDATIONS;
+    const anomaly = data.anomaly_summary;
+    return {
+      recommendations: recs.length > 0 ? recs : MOCK_RECOMMENDATIONS,
+      hypotheses: (data.pattern_hypotheses ?? []) as PatternHypothesis[],
+      matchedRuleIds: data.matched_rule_ids ?? [],
+      anomalySummary: anomaly
+        ? { hypoCount: anomaly.hypo_count, hyperCount: anomaly.hyper_count }
+        : null,
+    };
   } catch {
-    return MOCK_RECOMMENDATIONS;
+    return {
+      recommendations: MOCK_RECOMMENDATIONS,
+      hypotheses: MOCK_HYPOTHESES,
+      matchedRuleIds: MOCK_MATCHED_RULE_IDS,
+      anomalySummary: MOCK_ANOMALY_SUMMARY,
+    };
   }
 }
 
@@ -419,3 +447,13 @@ const MOCK_RECOMMENDATIONS: Recommendation[] = [
     description: "Level 2 저혈당 이벤트 반복 감지. CGM 알람 임계값 상향 조정 및 알람 응답 교육 권장.",
   },
 ];
+
+const MOCK_HYPOTHESES: PatternHypothesis[] = [
+  { code: "H_basal_excess", label: "기저인슐린 과다" },
+  { code: "H_late_exercise", label: "야간 운동 후 지연 저혈당" },
+  { code: "H_somogyi", label: "Somogyi 효과(야간 저혈당 반동)" },
+];
+
+const MOCK_MATCHED_RULE_IDS: string[] = ["nocturnal_hypo_pattern"];
+
+const MOCK_ANOMALY_SUMMARY = { hypoCount: 114, hyperCount: 6 };
