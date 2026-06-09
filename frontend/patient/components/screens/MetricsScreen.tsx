@@ -10,7 +10,7 @@ import { PATIENT_ID, weeklyRecords } from '../../constants';
 export function MetricsScreen({ records, goHome, targetRange, metricsFilter, metricsData }: any) {
   const [chartType, setChartType] = useState<ChartType>("day");
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
-  const [loadingAi, setLoadingAi] = useState(false);
+  const [loadingAi, setLoadingAi] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -18,30 +18,33 @@ export function MetricsScreen({ records, goHome, targetRange, metricsFilter, met
 
   useEffect(() => {
     const hasApi = !!process.env.NEXT_PUBLIC_API_URL;
-    if (metricsFilter === "all") {
-      if (!hasApi) {
-        setAiFeedback(
-          "패턴 요약: 최근 14일간 야간(02:00~04:00) 저혈당 패턴이 반복되고 있으며, " +
-          "아침 식후(08:00~10:00) 혈당 급상승이 관찰됩니다.\n\n" +
-          "임상 의미: 저녁 인슐린 용량 과다 또는 야간 활동량 부족으로 인한 Somogyi 효과가 의심됩니다. " +
-          "아침 기상 후 혈당 반등이 이에 해당합니다.\n\n" +
-          "권고사항: 취침 전 혈당을 130 mg/dL 이상으로 유지하고, " +
-          "야간 저혈당 발생 시 빠른 탄수화물(포도당 15g)을 즉시 섭취하세요."
-        );
-        setLoadingAi(false);
-        return;
-      }
-      setLoadingAi(true);
-      fetch(`/api/proxy/api/patient/${PATIENT_ID}/report/pattern`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.analysis) {
-            setAiFeedback(data.analysis);
-          }
-        })
-        .catch(err => console.error(err))
-        .finally(() => setLoadingAi(false));
+    if (metricsFilter !== "all") return;
+
+    if (!hasApi) {
+      setAiFeedback(
+        "패턴 요약: 최근 14일간 야간(02:00~04:00) 저혈당 패턴이 반복되고 있으며, " +
+        "아침 식후(08:00~10:00) 혈당 급상승이 관찰됩니다.\n\n" +
+        "임상 의미: 저녁 인슐린 용량 과다 또는 야간 활동량 부족으로 인한 Somogyi 효과가 의심됩니다. " +
+        "아침 기상 후 혈당 반등이 이에 해당합니다.\n\n" +
+        "권고사항: 취침 전 혈당을 130 mg/dL 이상으로 유지하고, " +
+        "야간 저혈당 발생 시 빠른 탄수화물(포도당 15g)을 즉시 섭취하세요."
+      );
+      setLoadingAi(false);
+      return;
     }
+
+    const controller = new AbortController();
+    setAiFeedback(null);
+    setLoadingAi(true);
+    fetch(`/api/proxy/api/patient/${PATIENT_ID}/report/pattern`, { signal: controller.signal })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.analysis) setAiFeedback(data.analysis);
+      })
+      .catch(err => { if (err.name !== "AbortError") console.error(err); })
+      .finally(() => { if (!controller.signal.aborted) setLoadingAi(false); });
+
+    return () => controller.abort();
   }, [metricsFilter]);
 
   return (
