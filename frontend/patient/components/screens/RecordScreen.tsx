@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '../ui/PageHeader';
 import { RecordList } from '../ui/RecordList';
 import { Screen, RecordItem } from '../../types';
@@ -92,7 +92,13 @@ export function RecordScreen({ records, setRecords, goHome, ...props }: any) {
         </div>
       </div>
 
-      <RecordList records={records} />
+      <RecordList
+        records={records}
+        onDelete={(time) => {
+          if (!confirm("이 기록을 삭제하시겠습니까?")) return;
+          setRecords((prev: any[]) => prev.filter((r) => !(r.time === time && r.type === "manual")));
+        }}
+      />
     </div>
   );
 }

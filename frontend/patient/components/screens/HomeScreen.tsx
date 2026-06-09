@@ -1,10 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
 import { TopTextButton } from '../ui/TopTextButton';
 import { MiniStat } from '../ui/MiniStat';
 import { StatusPill } from '../ui/StatusPill';
 import { DailyLineChart } from '../charts/DailyLineChart';
-import { Screen } from '../../types';
-import { calculateAge } from '../../utils';
 
 export function HomeScreen({
   records,
@@ -71,7 +68,7 @@ export function HomeScreen({
           00:00~23:59 기준으로 표시됩니다.
         </p>
 
-        <DailyLineChart records={records} targetRange={targetRange} />
+        <DailyLineChart records={records} targetRange={targetRange} onManualClick={goRecord} />
 
         <button
           type="button"

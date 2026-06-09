@@ -1,7 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
 import { RecordItem } from '../types';
 
-export function RecordList({ records }: { records: RecordItem[] }) {
+export function RecordList({ records, onDelete }: { records: RecordItem[]; onDelete?: (time: string) => void }) {
   const manualRecords = records.filter((item) => item.type === "manual").reverse();
 
   return (
@@ -16,16 +15,23 @@ export function RecordList({ records }: { records: RecordItem[] }) {
         ) : (
           manualRecords.map((item, i) => (
             <div key={i} className="py-4 text-sm">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-start">
                 <p>
                   <span className="text-2xl font-black">{item.glucose}</span>
                   <span className="ml-2 text-slate-500">mg/dL</span>
                 </p>
-                <p className="flex items-center">
-                  <span className="text-base font-bold text-slate-700">
-                    {item.time}
-                  </span>
-                </p>
+                <div className="flex items-center gap-3">
+                  <span className="text-base font-bold text-slate-700">{item.time}</span>
+                  {onDelete && (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(item.time)}
+                      className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-400 active:scale-95"
+                    >
+                      삭제
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="mt-2 text-slate-500">메모: {item.memo}</p>
             </div>

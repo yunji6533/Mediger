@@ -5,10 +5,12 @@ export function DailyLineChart({
   records,
   compact = false,
   targetRange,
+  onManualClick,
 }: {
   records: RecordItem[];
   compact?: boolean;
   targetRange: { min: number; max: number };
+  onManualClick?: () => void;
 }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const width = 320;
@@ -120,6 +122,7 @@ export function DailyLineChart({
               key={index}
               onMouseEnter={() => setHoverIndex(index)}
               onMouseLeave={() => setHoverIndex(null)}
+              onClick={() => point.isManual && onManualClick?.()}
               className="cursor-pointer"
             >
               <circle

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState } from 'react';
 import { PageHeader } from '../ui/PageHeader';
 import { WearableRow } from '../ui/WearableRow';
 import { Screen } from '../../types';
