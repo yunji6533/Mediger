@@ -13,6 +13,10 @@ export function MetricsScreen({ records, goHome, targetRange, metricsFilter, met
   const [loadingAi, setLoadingAi] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     const hasApi = !!process.env.NEXT_PUBLIC_API_URL;
     if (metricsFilter === "all") {
       if (!hasApi) {

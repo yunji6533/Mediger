@@ -1,4 +1,5 @@
-import { RecordItem } from '../types';
+import { useState, useMemo, useEffect } from 'react';
+import { RecordItem } from '../../types';
 
 export function RecordList({ records, onDelete }: { records: RecordItem[]; onDelete?: (time: string) => void }) {
   const manualRecords = records.filter((item) => item.type === "manual").reverse();
