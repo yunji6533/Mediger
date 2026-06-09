@@ -6,3 +6,7 @@ build/
 __pycache__/
 *.pyc
 .venv/
+<<<<<<< HEAD
+=======
+.DS_Store
+>>>>>>> 4e37e63 (프론트 백 연결)
