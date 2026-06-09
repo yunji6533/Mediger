@@ -104,6 +104,10 @@ export function MetricsScreen({ records, goHome, targetRange, metricsFilter, met
           <OutlierTable records={records} targetRange={targetRange} filter={metricsFilter} />
         </>
       )}
+
+      {metricsFilter !== "all" && (
+        <OutlierTable records={records} targetRange={targetRange} filter={metricsFilter} />
+      )}
     </div>
   );
 }

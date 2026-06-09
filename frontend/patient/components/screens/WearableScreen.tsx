@@ -4,7 +4,7 @@ import { WearableRow } from '../ui/WearableRow';
 import { Screen } from '../../types';
 
 export function WearableScreen({ goHome }: any) {
-  const [libreOn, setLibreOn] = useState(false);
+  const [libreOn, setLibreOn] = useState(true);
 
   return (
     <div className="space-y-6">
