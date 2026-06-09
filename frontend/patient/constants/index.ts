@@ -5,7 +5,7 @@ export const PATIENT_ID = "2009"; //시뮬레이터로 환자데이터넣은후 
 export const initialPatient: PatientInfo = {
   name: "환자 2002",
   gender: "남",
-  birth: "1969년생",
+  birth: "57세",
 };
 
 export const dayRecords: RecordItem[] = [

@@ -89,7 +89,7 @@ export default function Home() {
             setPatient({
               name: found.name || `환자 ${PATIENT_ID}`,
               gender: (found.gender === "M" || found.gender === "남") ? "남" : "여",
-              birth: found.age ? `${2026 - Number(found.age)}년생` : "미정",
+              birth: found.age ? `${found.age}세` : "미정",
             });
           }
         }

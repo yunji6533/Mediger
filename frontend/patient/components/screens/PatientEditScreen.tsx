@@ -10,7 +10,7 @@ export function PatientEditScreen({ patient, setPatient, goHome }: any) {
 
   const savePatient = () => {
     if (!name || !gender || !birth) {
-      alert("이름, 성별, 생년월일을 모두 입력해줘");
+      alert("이름, 성별, 나이를 모두 입력해주세요.");
       return;
     }
 
@@ -45,11 +45,15 @@ export function PatientEditScreen({ patient, setPatient, goHome }: any) {
             </select>
           </InputLabel>
 
-          <InputLabel label="생년월일">
+          <InputLabel label="나이">
             <input
-              value={birth}
-              onChange={(e) => setBirth(e.target.value)}
+              type="number"
+              min="0"
+              max="150"
+              value={parseInt(birth) || ""}
+              onChange={(e) => setBirth(`${e.target.value}세`)}
               className="input-style"
+              placeholder="나이 입력"
             />
           </InputLabel>
 

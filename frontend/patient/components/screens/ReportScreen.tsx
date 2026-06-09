@@ -119,7 +119,7 @@ export function ReportScreen({ patient, goHome, metricsData }: any) {
               <p className="text-lg font-black text-[#07142f]">{patient.name}</p>
             </div>
             <div>
-              <p className="text-xs font-bold text-[#7192ad] mb-1">생년월일</p>
+              <p className="text-xs font-bold text-[#7192ad] mb-1">나이</p>
               <p className="text-lg font-black text-[#07142f]">{patient.birth}</p>
             </div>
             <div>

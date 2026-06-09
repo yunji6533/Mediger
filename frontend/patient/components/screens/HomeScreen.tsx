@@ -33,7 +33,7 @@ export function HomeScreen({
             {patient.name}
           </h1>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            {patient.gender} · {calculateAge(patient.birth)}세
+            {patient.gender} · {patient.birth}
           </p>
         </button>
 
