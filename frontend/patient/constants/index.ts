@@ -1,6 +1,6 @@
 import { PatientInfo, RecordItem } from "../types";
 
-export const PATIENT_ID = "2000";
+export const PATIENT_ID = "2009"; //시뮬레이터로 환자데이터넣은후 환자 id 변경하면 이동
 
 export const initialPatient: PatientInfo = {
   name: "환자 2002",

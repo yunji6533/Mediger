@@ -18,12 +18,13 @@ export function ReportScreen({ patient, goHome, metricsData }: any) {
   }, [metricsData]);
 
   const [patternReport, setPatternReport] = useState<string | null>(null);
-  const [anomalyReport, setAnomalyReport] = useState<string | null>(null);
+  const [hypoReport, setHypoReport] = useState<string | null>(null);
+  const [hyperReport, setHyperReport] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
-    if (!BASE_URL) {
+    const hasApi = !!process.env.NEXT_PUBLIC_API_URL;
+    if (!hasApi) {
       setPatternReport(
         "패턴 요약:\n" +
         "최근 측정 데이터에서 아침 식후(08:00~10:00) 고혈당과 야간(02:00~04:00) 저혈당의 반복 패턴이 관찰됩니다. " +
@@ -43,8 +44,8 @@ export function ReportScreen({ patient, goHome, metricsData }: any) {
     const fetchReports = async () => {
       try {
         const [pRes, aRes] = await Promise.all([
-          fetch(`${BASE_URL}/patients/${PATIENT_ID}/report/pattern`),
-          fetch(`${BASE_URL}/patients/${PATIENT_ID}/report/anomaly`)
+          fetch(`/api/proxy/api/patient/${PATIENT_ID}/report/pattern`),
+          fetch(`/api/proxy/api/patient/${PATIENT_ID}/report/anomaly`)
         ]);
         if (pRes.ok) {
           const pData = await pRes.json();
@@ -52,10 +53,8 @@ export function ReportScreen({ patient, goHome, metricsData }: any) {
         }
         if (aRes.ok) {
           const aData = await aRes.json();
-          const hypo = aData.hypo?.analysis || "";
-          const hyper = aData.hyper?.analysis || "";
-          const combined = [hypo, hyper].filter(Boolean).join("\n\n");
-          setAnomalyReport(combined || null);
+          setHypoReport(aData.hypo?.analysis || null);
+          setHyperReport(aData.hyper?.analysis || null);
         }
       } catch (err) {
         console.error(err);
@@ -69,7 +68,7 @@ export function ReportScreen({ patient, goHome, metricsData }: any) {
   // 고혈당/저혈당 이상치 분석 생성 (API 실패 시 폴백)
   const generateAnomalyAnalysis = useMemo(() => {
     if (!metricsData) return null;
-    
+
     const tar = metricsData.tar || 0;
     const tbr = metricsData.tbr || 0;
     const avgGlucose = metricsData.avg_glucose || 0;
@@ -79,14 +78,14 @@ export function ReportScreen({ patient, goHome, metricsData }: any) {
     }
 
     let analysis = "";
-    
+
     if (tbr > 0) {
       analysis += `저혈당(70 mg/dL 미만) 발생 확률: ${tbr}%\n`;
       analysis += "- 저혈당 에피소드가 있습니다.\n";
       analysis += "- 특히 야간 저혈당 위험을 평가해야 합니다.\n";
       analysis += "- 인슐린 투여량 감소 또는 당분 간식 추가를 고려하세요.\n\n";
     }
-    
+
     if (tar > 0) {
       analysis += `고혈당(180 mg/dL 초과) 발생 확률: ${tar}%\n`;
       analysis += "- 지속적인 고혈당이 관찰됩니다.\n";
@@ -144,6 +143,28 @@ export function ReportScreen({ patient, goHome, metricsData }: any) {
                 </p>
               )}
             </div>
+          </div>
+
+          <div>
+            <h2 className="text-[19px] font-black text-[#07142f] border-b border-slate-900 pb-2 mb-4">이상치 분석</h2>
+            {loading ? (
+              <div className="flex justify-center items-center py-6 text-sm text-slate-500">AI 분석 중...</div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-blue-50 rounded-2xl p-5">
+                  <p className="text-sm font-black text-blue-700 mb-2">저혈당 분석 (70 mg/dL 미만)</p>
+                  <p className="text-[15px] leading-7 text-[#07142f] whitespace-pre-wrap">
+                    {hypoReport || `저혈당 비율(TBR): ${metricsData?.tbr ?? 0}%`}
+                  </p>
+                </div>
+                <div className="bg-orange-50 rounded-2xl p-5">
+                  <p className="text-sm font-black text-orange-700 mb-2">고혈당 분석 (180 mg/dL 초과)</p>
+                  <p className="text-[15px] leading-7 text-[#07142f] whitespace-pre-wrap">
+                    {hyperReport || `고혈당 비율(TAR): ${metricsData?.tar ?? 0}%`}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-slate-300 pt-6 mt-8 text-center">

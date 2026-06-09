@@ -13,9 +13,9 @@ export function MetricsScreen({ records, goHome, targetRange, metricsFilter, met
   const [loadingAi, setLoadingAi] = useState(false);
 
   useEffect(() => {
-    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+    const hasApi = !!process.env.NEXT_PUBLIC_API_URL;
     if (metricsFilter === "all") {
-      if (!BASE_URL) {
+      if (!hasApi) {
         setAiFeedback(
           "패턴 요약: 최근 14일간 야간(02:00~04:00) 저혈당 패턴이 반복되고 있으며, " +
           "아침 식후(08:00~10:00) 혈당 급상승이 관찰됩니다.\n\n" +
@@ -26,9 +26,9 @@ export function MetricsScreen({ records, goHome, targetRange, metricsFilter, met
         );
         setLoadingAi(false);
         return;
-      }  // API 없으면 mock 텍스트 표시
+      }
       setLoadingAi(true);
-      fetch(`${BASE_URL}/patients/${PATIENT_ID}/report/pattern`)
+      fetch(`/api/proxy/api/patient/${PATIENT_ID}/report/pattern`)
         .then(res => res.json())
         .then(data => {
           if (data && data.analysis) {
@@ -100,10 +100,10 @@ export function MetricsScreen({ records, goHome, targetRange, metricsFilter, met
               </div>
             )}
           </div>
+
+          <OutlierTable records={records} targetRange={targetRange} filter={metricsFilter} />
         </>
       )}
-
-      <OutlierTable records={records} targetRange={targetRange} filter={metricsFilter} />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ? "/api/proxy" : "";
 
 import { Screen, ChartType, RecordItem, PatientInfo } from "../types";
 import { PATIENT_ID, initialPatient, dayRecords, weeklyRecords } from "../constants";
@@ -68,25 +68,34 @@ export default function Home() {
 
       // 환자 API 엔드포인트에서 데이터 가져오기
       try {
-        const [todayRes, metricsRes, patientRes] = await Promise.all([
-          fetch(`${BASE_URL}/patients/${PATIENT_ID}/today`),     // 당일 혈당 시계열
-          fetch(`${BASE_URL}/patients/${PATIENT_ID}/metrics`),   // TIR/TAR/TBR 지표
-          fetch(`${BASE_URL}/patients/${PATIENT_ID}`),           // 환자 기본 정보 (doctor_api)
+        const [todayRes, metricsRes, patientsRes] = await Promise.all([
+          fetch(`${BASE_URL}/api/patient/${PATIENT_ID}/today`),
+          fetch(`${BASE_URL}/api/patient/${PATIENT_ID}/metrics`),
+          fetch(`${BASE_URL}/api/doctor/patients`),
         ]);
 
-        if (!todayRes.ok || !metricsRes.ok || !patientRes.ok) throw new Error("API 응답 실패");
+        const failedEndpoints = [
+          !todayRes.ok && `today(${todayRes.status})`,
+          !metricsRes.ok && `metrics(${metricsRes.status})`,
+        ].filter(Boolean);
+        if (failedEndpoints.length > 0) throw new Error(`API 응답 실패: ${failedEndpoints.join(", ")}`);
 
-        const todayData = await todayRes.json();    // { timeseries, current, alert, date }
-        const metricsApiData = await metricsRes.json(); // { tir, tar, tbr, avg_glucose, weekly_summaries, ... }
-        const patientData = await patientRes.json();   // { patientInfo: { name, age, gender, ... }, ... }
+        // 환자 기본 정보 (doctor 목록에서 필터링)
+        if (patientsRes.ok) {
+          const patientListData = await patientsRes.json();
+          const list = Array.isArray(patientListData) ? patientListData : (patientListData.patients || []);
+          const found = list.find((p: any) => String(p.patient_id) === String(PATIENT_ID));
+          if (found) {
+            setPatient({
+              name: found.name || `환자 ${PATIENT_ID}`,
+              gender: (found.gender === "M" || found.gender === "남") ? "남" : "여",
+              birth: found.age ? `${2026 - Number(found.age)}년생` : "미정",
+            });
+          }
+        }
 
-        // 환자 기본 정보 설정 (DynamoDB → doctor_api → /patients/{id})
-        const pInfo = patientData.patientInfo || {};
-        setPatient({
-          name: pInfo.name || `환자 ${PATIENT_ID}`,                                  // name 없으면 ID로 폴백
-          gender: (pInfo.gender === "M" || pInfo.gender === "남") ? "남" : "여",
-          birth: pInfo.age ? `${2026 - Number(pInfo.age)}년생` : "미정",
-        });
+        const todayData = await todayRes.json();
+        const metricsApiData = await metricsRes.json();
 
         // 당일 시계열 처리
         if (todayData && Array.isArray(todayData.timeseries)) {
@@ -117,11 +126,19 @@ export default function Home() {
           setRecords(parsedRecords);
         }
 
-        // 지표 데이터 설정 — 백엔드 계산값 그대로 사용
+        // weekly_summaries(날짜 DESC)를 차트용 { label, glucose }로 변환
+        const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
+        const weeklyForChart = (metricsApiData.weekly_summaries || [])
+          .slice()
+          .reverse()
+          .map((s: any) => ({
+            label: DAY_NAMES[new Date(s.date).getDay()],
+            glucose: Math.round(s.avg_glucose || 0),
+          }));
+
         setMetricsData({
-          weekly: weeklyRecords,
-          weekly_summaries: metricsApiData.weekly_summaries
-            || weeklyRecords.map(w => ({ avg_glucose: w.glucose })),
+          weekly: weeklyForChart.length > 0 ? weeklyForChart : weeklyRecords,
+          weekly_summaries: metricsApiData.weekly_summaries || [],
           tir: metricsApiData.tir ?? 0,
           tar: metricsApiData.tar ?? 0,
           tbr: metricsApiData.tbr ?? 0,
